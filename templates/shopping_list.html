@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shopping List</title>
+</head>
+<body>
+    <h1>Shopping List: {{ shopping_list.name }}</h1>
+    <ul>
+        {% for item in items %}
+        <li>{{ item.name }}</li>
+        {% endfor %}
+    </ul>
+    <!-- Add buttons or forms for adding new items or other functionality -->
+</body>
+</html>

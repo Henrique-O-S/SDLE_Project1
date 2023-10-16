@@ -2,7 +2,20 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-class ShoppingItem(db.Model):
+class ShoppingList(db.Model):
+    id = db.Column(db.String, primary_key=True)  # Use a string as the primary key for the URL
+    name = db.Column(db.String)
+
+class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), nullable=False)
-    quantity = db.Column(db.Integer, default=1)
+    name = db.Column(db.String)
+    quantity = db.Column(db.Integer)
+    shopping_list_id = db.Column(db.String, db.ForeignKey('shopping_list.id'))
+
+
+    
+def get_shopping_list_by_id(shopping_list_id):
+    return ShoppingList.query.get(shopping_list_id)
+
+def get_items_in_shopping_list(shopping_list_id):
+    return Item.query.filter_by(shopping_list_id=shopping_list_id).all()
