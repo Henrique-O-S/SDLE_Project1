@@ -1,15 +1,31 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Shopping List</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
 </head>
+
 <body>
+    {% if warning %}
+    <script>
+        alert("{{ warning }}");
+    </script>
+    {% endif %}
     <h1>Shopping List</h1>
-    
+    <!-- go back to admin page link -->
+    <a href="{{ url_for('routes.admin') }}">Go to admin page</a>
     <form action="/create_shopping_list" method="POST">
         <button type="submit">Create new shopping list</button>
     </form>
+    <!-- Form for checking a shopping list by ID -->
+    <form action="{{ url_for('routes.check_id') }}" method="GET">
+        <label for="list_id">Enter Shopping List ID:</label>
+        <input type="text" id="list_id" name="id">
+        <button type="submit">Check Shopping List</button>
+    </form>
+
 </body>
+
 </html>

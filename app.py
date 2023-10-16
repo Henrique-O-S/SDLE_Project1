@@ -9,7 +9,7 @@ DATABASE = os.path.join(PROJECT_ROOT, 'database', 'shopping_list.db')
 
 app = Flask(__name__)
 app.register_blueprint(routes)
-
+app.debug = True
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DATABASE  # Use SQLite in the 'database' folder
 db.init_app(app)
 
