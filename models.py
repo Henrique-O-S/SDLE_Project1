@@ -13,9 +13,12 @@ class Item(db.Model):
     shopping_list_id = db.Column(db.String, db.ForeignKey('shopping_list.id'))
 
 
-    
+
 def get_shopping_list_by_id(shopping_list_id):
     return ShoppingList.query.get(shopping_list_id)
+
+def get_shopping_lists():
+    return ShoppingList.query.all()
 
 def get_items_in_shopping_list(shopping_list_id):
     return Item.query.filter_by(shopping_list_id=shopping_list_id).all()

@@ -1,11 +1,20 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Admin Page</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
+<head>
+    <title>Admin page</title>
 </head>
+
 <body>
-    <h1>You discovered this page, nice</h1>
+    <h1>You found the admin menu</h1>
+    <ul>
+        {% for shopping_list in shopping_lists %}
+        <li><a href="{{ url_for('routes.shopping_list', id=shopping_list.id) }}">
+                {{ shopping_list.id }} | {{shopping_list.name}}
+            </a></li>
+        {% endfor %}
+    </ul>
+    <!-- Add buttons or forms for adding new items or other functionality -->
 </body>
+
 </html>

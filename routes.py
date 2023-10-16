@@ -12,7 +12,12 @@ def home():
 
 @routes.route('/admin')
 def about():
-    return render_template('admin.html')
+    # Retrieve the shopping list and its associated items based on the ID
+    shopping_lists = get_shopping_lists()
+
+    
+    # Pass the shopping list and items to the template for rendering
+    return render_template('admin.html', shopping_lists=shopping_lists)
 
 @routes.route('/create_shopping_list', methods=['POST'])
 def create_shopping_list():
