@@ -1,18 +1,23 @@
 from flask_sqlalchemy import SQLAlchemy
 import random
 import string
+from datetime import datetime
+from sqlalchemy import DateTime
+from sqlalchemy.sql import func
 
 db = SQLAlchemy()
 
 class ShoppingList(db.Model):
     id = db.Column(db.String, primary_key=True)  # Use a string as the primary key for the URL
     name = db.Column(db.String)
+    created_at = db.Column(db.TIMESTAMP, default=datetime.utcnow)  # Set the default value to the current date and time
 
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
     quantity = db.Column(db.Integer)
     shopping_list_id = db.Column(db.String, db.ForeignKey('shopping_list.id'))
+    created_at = db.Column(db.TIMESTAMP, default=datetime.utcnow)  # Set the default value to the current date and time
 
 
 

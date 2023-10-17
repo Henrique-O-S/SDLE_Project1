@@ -2,6 +2,8 @@ from flask import Flask
 from models import db
 from routes import routes
 import os
+from sqlalchemy import text
+
 
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 
@@ -15,7 +17,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DATABASE  # Use SQLite in
 db.init_app(app)
 
 # Create the database tables
-with app.app_context():
+with app.app_context():  
     db.create_all()  # create models not yet created
 
 if __name__ == '__main__':
