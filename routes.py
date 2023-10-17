@@ -1,6 +1,6 @@
 import random
 import string
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from models import *
 
 # Create a Flask Blueprint
@@ -38,8 +38,8 @@ def shopping_list(id):
     shopping_list = get_shopping_list_by_id(id)
     
     if shopping_list is None:
-        warning = "Shopping List ID not found. Please enter a valid ID."
-        return render_template('index.html', warning=warning)
+        flash('Shopping list not found', 'warning')
+        return render_template('index.html')
     
     items = get_items_in_shopping_list(id)
     return render_template('shopping_list.html', shopping_list=shopping_list, items=items)
