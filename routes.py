@@ -77,3 +77,17 @@ def add_item(id):
             flash('Item added successfully', 'success')
 
     return redirect(url_for('routes.shopping_list', id=id))
+
+@routes.route('/delete_shopping_list/<id>', methods=['POST'])
+def delete_shopping_list(id):
+    shopping_list = ShoppingList.query.get(id)
+
+    if shopping_list:
+        # Delete the shopping list and its associated items
+        db.session.delete(shopping_list)
+        db.session.commit()
+        flash('Shopping list deleted successfully', 'success')
+    else:
+        flash('Shopping list not found', 'warning')
+
+    return redirect(url_for('routes.admin'))

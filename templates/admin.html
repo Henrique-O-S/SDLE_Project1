@@ -17,7 +17,12 @@
                 {{shopping_list.name}}
             </a>
             <!-- form action url - delete, shopping_list.id -->
-            <button type="submit">Delete</button>
+
+            <form method="POST" action="{{ url_for('routes.delete_shopping_list', id=shopping_list.id) }}">
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+
+
         </li>
         {% endfor %}
     </ul>
