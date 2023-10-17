@@ -16,18 +16,16 @@
     {% endif %}
     {% endwith %}
     <h1>Shopping List</h1>
-    <!-- go back to admin page link -->
-    <a href="{{ url_for('routes.admin') }}">Go to admin page</a>
+    <a href="{{ url_for('routes.admin') }}">Admin Page</a>
     <form action="/create_shopping_list" method="POST">
-        <label for="list_name">Shopping List Name:</label>
-        <input type="text" id="list_name" name="name" required>
-        <button type="submit">Create new shopping list</button>
+        <label for="list_name">Create New Shopping List</label>
+        <input type="text" id="list_name" name="name" required placeholder="Shopping list name">
+        <button type="submit">Submit</button>
     </form>
-    <!-- Form for checking a shopping list by ID -->
     <form action="{{ url_for('routes.check_id') }}" method="GET">
-        <label for="list_id">Enter Shopping List ID:</label>
-        <input type="text" id="list_id" name="id">
-        <button type="submit">Check Shopping List</button>
+        <label for="list_id">View Shopping List</label>
+        <input type="text" id="list_id" name="id" placeholder="Shopping list ID">
+        <button type="submit">Submit</button>
     </form>
 
 </body>
