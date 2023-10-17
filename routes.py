@@ -57,3 +57,23 @@ def check_id():
     id = request.args.get('id')  # Get the ID from the query parameters
     return redirect(url_for('routes.shopping_list', id=id))
 
+@routes.route('/add_item/<id>', methods=['POST'])
+def add_item(id):
+    # Get the shopping list based on the provided ID
+    shopping_list = ShoppingList.query.get(id)
+
+    if shopping_list is None:
+        flash('Shopping list not found', 'warning')
+    else:
+        item_name = request.form.get('item_name')
+        item_quantity = request.form.get('item_quantity')
+
+        if not item_name or not item_quantity:
+            flash('Item name and quantity are required', 'danger')
+        else:
+            new_item = Item(name=item_name, quantity=item_quantity, shopping_list_id=id)
+            db.session.add(new_item)
+            db.session.commit()
+            flash('Item added successfully', 'success')
+
+    return redirect(url_for('routes.shopping_list', id=id))
