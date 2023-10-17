@@ -2,20 +2,25 @@
 <html>
 
 <head>
-    <title>Admin page</title>
+    <title>Admin Page</title>
 </head>
 
 <body>
-    <a href="{{ url_for('routes.home') }}">Go back</a>
-    <h1>You found the admin menu</h1>
+    <a href="{{ url_for('routes.home') }}">Home</a>
+    <h1>Admin Page</h1>
+    <h3>Shopping Lists</h3>
     <ul>
         {% for shopping_list in shopping_lists %}
-        <li><a href="{{ url_for('routes.shopping_list', id=shopping_list.id) }}">
-                {{ shopping_list.id }} | {{shopping_list.name}}
-            </a></li>
+        <li>
+            [{{ shopping_list.id }}]
+            <a href="{{ url_for('routes.shopping_list', id=shopping_list.id) }}">
+                {{shopping_list.name}}
+            </a>
+            <!-- form action url - delete, shopping_list.id -->
+            <button type="submit">Delete</button>
+        </li>
         {% endfor %}
     </ul>
-    <!-- Add buttons or forms for adding new items or other functionality -->
 </body>
 
 </html>
