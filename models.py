@@ -1,4 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
+import random
+import string
 
 db = SQLAlchemy()
 
@@ -22,3 +24,6 @@ def get_shopping_lists():
 
 def get_items_in_shopping_list(shopping_list_id):
     return Item.query.filter_by(shopping_list_id=shopping_list_id).all()
+
+def get_random_id():
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=8))

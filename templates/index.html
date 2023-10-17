@@ -19,6 +19,8 @@
     <!-- go back to admin page link -->
     <a href="{{ url_for('routes.admin') }}">Go to admin page</a>
     <form action="/create_shopping_list" method="POST">
+        <label for="list_name">Shopping List Name:</label>
+        <input type="text" id="list_name" name="name" required>
         <button type="submit">Create new shopping list</button>
     </form>
     <!-- Form for checking a shopping list by ID -->
