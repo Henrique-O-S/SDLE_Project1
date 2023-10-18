@@ -1,11 +1,9 @@
-/* General body styles */
 body {
     font-family: Arial, sans-serif;
     font-size: 14px;
     text-align: left;
 }
 
-/* Header styles */
 header {
     background-color: #3498db;
     color: #fff;
@@ -16,11 +14,10 @@ header {
 h1 a {
     text-decoration: none;
     color: white;
-    font-size: 20px; /* Reduce the font size slightly */
+    font-size: 20px;
     padding-left: 10px;
 }
 
-/* Message styles */
 .message {
     background-color: #3498db;
     color: #fff;
@@ -28,12 +25,21 @@ h1 a {
     margin: 10px 0;
     border-radius: 5px;
     text-align: left;
-    font-size: 12px;
+    font-size: 14px;
+    width: 400px;
 }
 
 h3 a {
     text-decoration: none;
-    color: #3498db;
+    color: darkblue;
+}
+
+h2 {
+    color: brown;
+}
+
+h4 {
+    color: brown;
 }
 
 ul {
@@ -46,34 +52,35 @@ li {
     align-items: center;
     width: 400px;
     margin-bottom: 10px;
-    justify-content: space-between; /* Create space between flex elements */
+    justify-content: space-between;
 }
 
-/* Link styles in the list */
 li a {
     text-decoration: none;
-    color: #3498db;
+    color: darkorange;
     font-size: 14px;
 }
 
-.shopping_list {
+.shopping_list,
+.item {
     background-color: #f7f7f7;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 14px;
     flex: 1;
-    margin-right: 10px; /* Add margin to the right of the shopping list div */
+    margin-right: 10px;
 }
 
 .shopping_list a {
     text-decoration: none;
-    color: darkblue;
+    color: black;
     font-size: 14px;
     font-weight: bold;
 }
 
 .delete {
+    border: none;
     background-color: #e74c3c;
     color: #fff;
     cursor: pointer;
@@ -81,12 +88,9 @@ li a {
     border: none;
     padding: 10px;
     border-radius: 5px;
-    margin-left: 10px; /* Add margin to the left of the delete button */
+    margin-left: 10px;
 }
 
-/* Adjust the button styles as needed to match your design */
-
-/* Adjust label styles if necessary */
 label {
     font-weight: bold;
     display: block;
@@ -94,8 +98,8 @@ label {
     font-size: 14px;
 }
 
-/* Adjust input and button styles for the forms if needed */
-input[type="text"] {
+input[type="text"],
+input[type="number"] {
     padding: 10px;
     margin: 10px 0;
     border: 1px solid #ccc;
@@ -107,8 +111,28 @@ input[type="text"] {
 button[type="submit"] {
     padding: 10px;
     margin: 10px 0;
-    border: 1px solid #ccc;
+    border: 2px solid darkolivegreen;
     border-radius: 5px;
     width: 100px;
     font-size: 14px;
+    cursor: pointer;
+}
+
+#item_name {
+    width: 270px;
+}
+
+#item_quantity {
+    width: 270px;
+}
+
+.item_button {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.item_button button {
+    align-items: center;
+    width: 292px;
 }
