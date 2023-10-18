@@ -5,20 +5,25 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     </head>
     <header>
-        <h1>Shopping List Application</h1>
-        <a href="{{ url_for('routes.admin') }}">Admin Page</a>
+        <h1>
+            <a href="{{ url_for('routes.home') }}">Shopping List Application</a>
+        </h1>
     </header>
     <body>
-        <a href="{{ url_for('routes.home') }}">Home</a>
-        <h1>Admin Page</h1>
-        <h3>All Shopping Lists</h3>
+        <h3>
+            <a href="{{ url_for('routes.home') }}">Home Page</a>
+        </h3>
+        <h2>Admin Page</h2>
+        <h4>All Shopping Lists</h4>
         <ul>
             {% for shopping_list in shopping_lists %}
             <li>
-                [{{ shopping_list.id }}]
-                <a href="{{ url_for('routes.shopping_list', id=shopping_list.id) }}">
-                    {{shopping_list.name}}
-                </a>
+                <div class="shopping_list">
+                    [{{ shopping_list.id }}]
+                    <a href="{{ url_for('routes.shopping_list', id=shopping_list.id) }}">
+                        {{shopping_list.name}}
+                    </a>
+                </div>
                 <form method="POST" action="{{ url_for('routes.delete_shopping_list', id=shopping_list.id) }}">
                     <button type="submit" class="delete">Delete</button>
                 </form>
