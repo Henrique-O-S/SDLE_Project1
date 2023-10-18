@@ -1,32 +1,30 @@
 <!DOCTYPE html>
 <html>
-
-<head>
-    <title>Shopping List</title>
-</head>
-
-<body>
-    <a href="{{ url_for('routes.home') }}">Home</a>
-    <h1>Shopping List: {{ shopping_list.name }}</h1>
-    <h4>ID: [{{ shopping_list.id }}]</h4>
-    <h3>Items</h3>
-    <ul>
-        {% for item in items %}
-        <li>
-            {{ item.name }} [{{ item.quantity }}]
-            <!-- form method="DELETE" action=(delete_route, item_id) -->
-            <button type="submit">Delete Item</button>
-        </li>
-        {% endfor %}
-    </ul>
-    <h3>Add Item</h3>
-    <form method="POST" action="{{ url_for('routes.add_item', id=shopping_list.id) }}">
-        <label for="item_name">Item Name:</label>
-        <input type="text" id="item_name" name="item_name" required>
-        <label for="item_quantity">Quantity:</label>
-        <input type="number" id="item_quantity" name="item_quantity" required>
-        <button type="submit">Add Item</button>
-    </form>
-</body>
-
+    <head>
+        <title>Shopping List</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    </head>
+    <body>
+        <a href="{{ url_for('routes.home') }}">Home</a>
+        <h1>Shopping List: {{ shopping_list.name }}</h1>
+        <h4>ID: [{{ shopping_list.id }}]</h4>
+        <h3>Items</h3>
+        <ul>
+            {% for item in items %}
+            <li>
+                {{ item.name }} [{{ item.quantity }}]
+                <!-- form method="DELETE" action=(delete_route, item_id) -->
+                <button type="submit" class="delete">Delete Item</button>
+            </li>
+            {% endfor %}
+        </ul>
+        <h3>Add Item</h3>
+        <form method="POST" action="{{ url_for('routes.add_item', id=shopping_list.id) }}">
+            <label for="item_name">Item Name:</label>
+            <input type="text" id="item_name" name="item_name" required>
+            <label for="item_quantity">Quantity:</label>
+            <input type="number" id="item_quantity" name="item_quantity" required>
+            <button type="submit">Add Item</button>
+        </form>
+    </body>
 </html>

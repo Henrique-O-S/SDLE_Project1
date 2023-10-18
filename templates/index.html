@@ -1,33 +1,39 @@
 <!DOCTYPE html>
 <html>
-
-<head>
-    <title>Shopping List</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="{{ url_for('static', filename='scripts/flash_messages.js') }}"></script>
-</head>
-
-<body>
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    {% for message in messages %}
-    <h3 class="message">{{ message }}</h3>
-    {% endfor %}
-    {% endif %}
-    {% endwith %}
-    <h1>Shopping List</h1>
-    <a href="{{ url_for('routes.admin') }}">Admin Page</a>
-    <form action="/create_shopping_list" method="POST">
-        <label for="list_name">Create New Shopping List</label>
-        <input type="text" id="list_name" name="name" required placeholder="Shopping list name">
-        <button type="submit">Submit</button>
-    </form>
-    <form action="{{ url_for('routes.check_id') }}" method="GET">
-        <label for="list_id">View Shopping List</label>
-        <input type="text" id="list_id" name="id" placeholder="Shopping list ID">
-        <button type="submit">Submit</button>
-    </form>
-
-</body>
-
+    <head>
+        <title>Shopping List Application</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        <script src="{{ url_for('static', filename='scripts/flash_messages.js') }}"></script>
+    </head>
+    <header>
+        <h1>
+            <a href="{{ url_for('routes.home') }}">Shopping List Application</a>
+        </h1>
+    </header>
+    <body>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        <div class="message">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <h2>
+            <a href="{{ url_for('routes.admin') }}">Admin Page</a>
+        </h2>
+        <section id="create_list">
+            <form action="/create_shopping_list" method="POST">
+                <label for="list_name">New shopping list</label>
+                <input type="text" id="list_name" name="name" required placeholder="Type name for new list">
+                <button type="submit">Add</button>
+            </form>
+        </section>
+        <section id="view_list">
+            <form action="{{ url_for('routes.check_id') }}" method="GET">
+                <label for="list_id">View shopping list</label>
+                <input type="text" id="list_id" name="id" placeholder="Type shopping list ID">
+                <button type="submit">Submit</button>
+            </form>
+        </section>
+    </body>
 </html>

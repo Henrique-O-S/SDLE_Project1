@@ -1,31 +1,29 @@
 <!DOCTYPE html>
 <html>
-
-<head>
-    <title>Admin Page</title>
-</head>
-
-<body>
-    <a href="{{ url_for('routes.home') }}">Home</a>
-    <h1>Admin Page</h1>
-    <h3>Shopping Lists</h3>
-    <ul>
-        {% for shopping_list in shopping_lists %}
-        <li>
-            [{{ shopping_list.id }}]
-            <a href="{{ url_for('routes.shopping_list', id=shopping_list.id) }}">
-                {{shopping_list.name}}
-            </a>
-            <!-- form action url - delete, shopping_list.id -->
-
-            <form method="POST" action="{{ url_for('routes.delete_shopping_list', id=shopping_list.id) }}">
-                <button type="submit" class="btn btn-danger">Delete</button>
-            </form>
-
-
-        </li>
-        {% endfor %}
-    </ul>
-</body>
-
+    <head>
+        <title>Admin Page</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    </head>
+    <header>
+        <h1>Shopping List Application</h1>
+        <a href="{{ url_for('routes.admin') }}">Admin Page</a>
+    </header>
+    <body>
+        <a href="{{ url_for('routes.home') }}">Home</a>
+        <h1>Admin Page</h1>
+        <h3>All Shopping Lists</h3>
+        <ul>
+            {% for shopping_list in shopping_lists %}
+            <li>
+                [{{ shopping_list.id }}]
+                <a href="{{ url_for('routes.shopping_list', id=shopping_list.id) }}">
+                    {{shopping_list.name}}
+                </a>
+                <form method="POST" action="{{ url_for('routes.delete_shopping_list', id=shopping_list.id) }}">
+                    <button type="submit" class="delete">Delete</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+    </body>
 </html>
