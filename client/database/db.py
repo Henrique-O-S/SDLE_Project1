@@ -1,7 +1,7 @@
 import sqlite3
 
 # Connect to the database (or create it if it doesn't exist)
-conn = sqlite3.connect('database/shopping_list.db')
+conn = sqlite3.connect('shopping_list.db')
 
 # Create a cursor object
 cursor = conn.cursor()
@@ -10,9 +10,10 @@ cursor = conn.cursor()
 
 cursor.execute('''
     DROP TABLE IF EXISTS shopping_list;
+''')
+cursor.execute('''
     DROP TABLE IF EXISTS item;
 ''')
-
 # Commit the changes and close the connection
 conn.commit()
 conn.close()
