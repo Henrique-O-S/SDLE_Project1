@@ -1,8 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from models import *
+import requests
 
 # Create a Flask Blueprint
 routes = Blueprint('routes', __name__)
+
+server_url = 'http://127.0.0.1:8000/'
+
 
 
 @routes.route('/')
@@ -31,8 +35,21 @@ def create_shopping_list():
         random_id = get_random_id()
 
         new_list = ShoppingList(id=random_id, name=name)
+
         db.session.add(new_list)
         db.session.commit()
+
+        payload = {
+        'id': new_list.id,
+        'name': new_list.name,
+        }
+
+        response = requests.post(server_url + 'create_shopping_list', json=payload)
+
+        response_data = response.json()
+
+        flash(response_data['message'], response_data['type'])
+
 
         flash('Shopping list created successfully', 'success')
         return redirect(url_for('routes.shopping_list', id=random_id))  # Redirect to the newly created shopping list

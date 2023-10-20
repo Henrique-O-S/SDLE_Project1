@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from models import *
 
 # Create a Flask Blueprint
@@ -22,20 +22,19 @@ def admin():
 @routes.route('/create_shopping_list', methods=['POST'])
 def create_shopping_list():
     if request.method == 'POST':
-        name = request.form.get('name')
-
+        data = request.get_json()
+        name = data.get('name')
+        id = data.get('id')
         if not name:
-            flash('Shopping list name is required', 'error')
-            return redirect(url_for('routes.home'))
+            return jsonify({'type': 'warning', 'message': 'Shopping list name is required'})
 
-        random_id = get_random_id()
-
-        new_list = ShoppingList(id=random_id, name=name)
+        
+        new_list = ShoppingList(id=id, name=name)
         db.session.add(new_list)
         db.session.commit()
 
         flash('Shopping list created successfully', 'success')
-        return redirect(url_for('routes.shopping_list', id=random_id))  # Redirect to the newly created shopping list
+        return jsonify({'type': 'success', 'message': 'Shopping list Created'})
 
 
 
