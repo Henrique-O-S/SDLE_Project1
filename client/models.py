@@ -1,6 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-import random
-import string
+import uuid
 from datetime import datetime
 from sqlalchemy import DateTime
 from sqlalchemy.sql import func
@@ -31,9 +30,5 @@ def get_items_in_shopping_list(shopping_list_id):
     return Item.query.filter_by(shopping_list_id=shopping_list_id).all()
 
 def get_random_id():
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+    return str(uuid.uuid4())
 
-# c1 manda .... c2 manda time 1 < time 2
-# recebe c2 ... recebe c1
-
-# a cada 4 segundos pegas em todas as msg que o sv recebe e ordenas segundo timestamp
