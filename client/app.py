@@ -21,4 +21,8 @@ with app.app_context():
     db.create_all()  # create models not yet created
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=5000)
+
+# sv!!
+# local
+# abraco

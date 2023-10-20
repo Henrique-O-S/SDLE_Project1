@@ -32,3 +32,8 @@ def get_items_in_shopping_list(shopping_list_id):
 
 def get_random_id():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+
+# c1 manda .... c2 manda time 1 < time 2
+# recebe c2 ... recebe c1
+
+# a cada 4 segundos pegas em todas as msg que o sv recebe e ordenas segundo timestamp
