@@ -10,6 +10,13 @@
         </h1>
     </header>
     <body>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        <div class="message">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
         <h3>
             <a href="{{ url_for('routes.home') }}">Home Page</a>
         </h3>

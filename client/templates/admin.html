@@ -10,6 +10,13 @@
         </h1>
     </header>
     <body>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        <div class="message">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
         <h3>
             <a href="{{ url_for('routes.home') }}">Home Page</a>
         </h3>
@@ -21,9 +28,10 @@
                 <div class="shopping_list">
                     [{{ shopping_list.id }}]
                     <a href="{{ url_for('routes.shopping_list', id=shopping_list.id) }}">
-                        {{shopping_list.name}}
+                        {{ shopping_list.name }}
                     </a>
-                </div>
+                </div>                
+                
                 <form method="POST" action="{{ url_for('routes.delete_shopping_list', id=shopping_list.id) }}">
                     <button type="submit" class="delete">Delete</button>
                 </form>

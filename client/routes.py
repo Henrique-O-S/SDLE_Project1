@@ -1,3 +1,4 @@
+import json
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from models import *
 import requests
@@ -51,28 +52,38 @@ def create_shopping_list():
         flash(response_data['message'], response_data['type'])
 
 
-        flash('Shopping list created successfully', 'success')
         return redirect(url_for('routes.shopping_list', id=random_id))  # Redirect to the newly created shopping list
 
 
 
-@routes.route('/shopping_list/<id>')
-def shopping_list(id):
-    # Retrieve the shopping list and its associated items based on the ID
-    shopping_list = get_shopping_list_by_id(id)
-
-    if shopping_list is None:
-        flash('Shopping list not found', 'warning')
-        return render_template('index.html')
-
-    items = get_items_in_shopping_list(id)
-    return render_template('shopping_list.html', shopping_list=shopping_list, items=items)
-
-
-@routes.route('/check_id', methods=['GET'])
-def check_id():
+@routes.route('/shopping_list', methods=['GET'])
+def shopping_list():
     id = request.args.get('id')  # Get the ID from the query parameters
-    return redirect(url_for('routes.shopping_list', id=id))
+
+    payload = {
+    'id': id,
+    }
+
+    response = requests.post(server_url + 'shopping_list', json=payload)
+
+    response_data = response.json()
+
+    if response_data['type'] == 'warning':
+        shopping_list = get_list(id)
+        if shopping_list is None:
+            flash('Shopping list not found', 'warning')
+            return render_template('index.html')
+        items = get_items_in_list(id)
+        flash('Retrieved Shopping list from Local Storage', 'success')
+        return render_template('shopping_list.html', shopping_list=shopping_list, items=items)
+
+    shopping_list_data = response_data['shopping_list']
+    items_data = response_data['items']
+    print(items_data)
+    shopping_list = ShoppingList.from_json(shopping_list_data)
+    items = [Item.from_json(item) for item in items_data]
+    flash('Retrieved Shopping list from Server', 'success')
+    return render_template('shopping_list.html', shopping_list=shopping_list, items=items)
 
 @routes.route('/add_item/<id>', methods=['POST'])
 def add_item(id):

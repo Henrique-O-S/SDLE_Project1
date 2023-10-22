@@ -1,3 +1,4 @@
+import json
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from models import *
 
@@ -38,17 +39,36 @@ def create_shopping_list():
 
 
 
-@routes.route('/shopping_list/<id>')
-def shopping_list(id):
-    # Retrieve the shopping list and its associated items based on the ID
-    shopping_list = get_shopping_list_by_id(id)
+@routes.route('/shopping_list', methods=['GET', 'POST'])
+def shopping_list():
+    if request.method == 'GET':
+        id = request.args.get('id')  # Get the ID from the query parameters
 
-    if shopping_list is None:
-        flash('Shopping list not found', 'warning')
-        return render_template('index.html')
+        shopping_list = get_list(id)
+        if shopping_list is None:
+            flash('Shopping list not found', 'warning')
+            return render_template('index.html')
 
-    items = get_items_in_shopping_list(id)
-    return render_template('shopping_list.html', shopping_list=shopping_list, items=items)
+        items = get_items_in_list(id)
+        return render_template('shopping_list.html', shopping_list=shopping_list, items=items)
+    else:
+        data = request.get_json()
+        id = data.get('id')
+        shopping_list = get_list(id)
+        if shopping_list is None:
+            return jsonify({'type': 'warning', 'message': 'Shopping list not found'})
+
+        items = get_items_in_list(id)
+
+        shopping_list_data = json.dumps(shopping_list.to_dict())
+        items_data = [json.dumps(item.to_dict()) for item in items]
+        if items_data == "[]":
+            items_data = "[{}]"
+        print(shopping_list_data)
+
+        print(items_data)
+
+        return jsonify({'type': 'success', 'message': 'Shopping list found', 'shopping_list': shopping_list_data, 'items': items_data})
 
 
 @routes.route('/check_id', methods=['GET'])
