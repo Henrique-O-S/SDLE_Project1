@@ -1,54 +1,58 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Shopping List</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    </head>
-    <header>
-        <h1>
-            <a href="{{ url_for('routes.home') }}">Shopping List Application</a>
-        </h1>
-    </header>
-    <body>
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        {% for message in messages %}
-        <div class="message">{{ message }}</div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-        <h3>
-            <a href="{{ url_for('routes.home') }}">Home Page</a>
-        </h3>
-        <h3>
-            <a href="{{ url_for('routes.admin') }}">Admin Page</a>
-        </h3>
-        <h2>Shopping List Page</h2>
-        <h4>ID: [{{ shopping_list.id }}]</h4>
-        <h4>Name: {{ shopping_list.name }}</h4>
-        <h3>Items</h3>
-        <ul>
-            {% for item in items %}
-            <li>
-                <div class="item">
-                    {{ item.name }} [{{ item.quantity }}]
-                </div>
-                <!-- form method="DELETE" action=(delete_route, item_id) -->
-                <button type="submit" class="delete">Delete Item</button>
-            </li>
-            {% endfor %}
-        </ul>
-        <section id="add_item">
-            <h4>Add Item</h4>
-            <form method="POST" action="{{ url_for('routes.add_item', id=shopping_list.id) }}">
-                <label for="item_name">Item Name:</label>
-                <input type="text" id="item_name" name="item_name" required>
-                <label for="item_quantity">Quantity:</label>
-                <input type="number" id="item_quantity" name="item_quantity" required>
-                <div class="item_button">
-                    <button type="submit" class="item_button">Add New Item</button>
-                </div>
+
+<head>
+    <title>Shopping List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<header>
+    <h1>
+        <a href="{{ url_for('routes.home') }}">Shopping List Application</a>
+    </h1>
+</header>
+
+<body>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+    <div class="message">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <h3>
+        <a href="{{ url_for('routes.home') }}">Home Page</a>
+    </h3>
+    <h3>
+        <a href="{{ url_for('routes.admin') }}">Admin Page</a>
+    </h3>
+    <h2>Shopping List Page</h2>
+    <h4>ID: [{{ shopping_list.id }}]</h4>
+    <h4>Name: {{ shopping_list.name }}</h4>
+    <h3>Items</h3>
+    <ul>
+        {% for item in items %}
+        <li>
             </form>
-        </section>
-    </body>
+            <div class="item">
+                {{ item.name }} [{{ item.quantity }}]
+            </div>
+            <button type="submit" class="delete">Delete Item</button>
+        </li>
+        {% endfor %}
+    </ul>
+    <section id="add_item">
+        <h4>Add Item</h4>
+        <form action="/add_item" method="POST">
+            <input type="hidden" value="{{shopping_list.id}}">
+            <label for="item_name">Item Name:</label>
+            <input type="text" id="item_name" name="item_name" required>
+            <label for="item_quantity">Quantity:</label>
+            <input type="number" id="item_quantity" name="item_quantity" required>
+            <div class="item_button">
+                <button type="submit" class="item_button">Add New Item</button>
+            </div>
+        </form>
+    </section>
+</body>
+
 </html>

@@ -44,3 +44,8 @@ def get_items_in_list(shopping_list_id):
 def get_random_id():
     return str(uuid.uuid4())
 
+def check_item_existence(item_id):
+    # Check if an item with the specified item_id exists in the database
+    existing_item = Item.query.filter_by(id=item_id).first()
+    
+    return existing_item is not None

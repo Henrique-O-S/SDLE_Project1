@@ -9,7 +9,6 @@ routes = Blueprint('routes', __name__)
 server_url = 'http://127.0.0.1:8000/'
 
 
-
 @routes.route('/')
 def home():
     return render_template('index.html')
@@ -41,19 +40,19 @@ def create_shopping_list():
         db.session.commit()
 
         payload = {
-        'id': new_list.id,
-        'name': new_list.name,
+            'id': new_list.id,
+            'name': new_list.name,
         }
 
-        response = requests.post(server_url + 'create_shopping_list', json=payload)
+        response = requests.post(
+            server_url + 'create_shopping_list', json=payload)
 
         response_data = response.json()
 
         flash(response_data['message'], response_data['type'])
 
-
-        return redirect(url_for('routes.shopping_list', id=random_id))  # Redirect to the newly created shopping list
-
+        # Redirect to the newly created shopping list
+        return redirect(url_for('routes.shopping_list', id=random_id))
 
 
 @routes.route('/shopping_list', methods=['GET'])
@@ -61,7 +60,7 @@ def shopping_list():
     id = request.args.get('id')  # Get the ID from the query parameters
 
     payload = {
-    'id': id,
+        'id': id,
     }
 
     response = requests.post(server_url + 'shopping_list', json=payload)
@@ -82,31 +81,55 @@ def shopping_list():
     print(items_data)
     shopping_list = ShoppingList.from_json(shopping_list_data)
     items = [Item.from_json(item) for item in items_data]
+    for item in items:
+        if not check_item_existence(item.id):
+            db.session.add(item)
+            db.session.commit()
     flash('Retrieved Shopping list from Server', 'success')
     return render_template('shopping_list.html', shopping_list=shopping_list, items=items)
 
-@routes.route('/add_item/<id>', methods=['POST'])
-def add_item(id):
-    # Get the shopping list based on the provided ID
-    shopping_list = ShoppingList.query.get(id)
 
-    if shopping_list is None:
-        flash('Shopping list not found', 'warning')
+@routes.route('/add_item', methods=['POST'])
+def add_item():
+    if request.method == 'POST':
+        name = request.form.get('text')
+        quantity = request.form.get('quantity')
+        id = request.form.get('shopping_list_id')
+
+        if not name:
+            flash('Item name is required', 'error')
+            return redirect(url_for('routes.shopping_list', id=id))
+        if not quantity or quantity == '0':
+            flash('Item quantity is required', 'error')
+            return redirect(url_for('routes.shopping_list', id=id))
+        payload = {
+            'id': id,
+            'name': name,
+            'quantity': quantity,
+        }
+
+    response = requests.post(server_url + 'add_item', json=payload)
+
+    response_data = response.json()
+
+    if response_data['type'] == 'warning':
+        shopping_list = get_list(id)
+        if shopping_list is None:
+            flash('Shopping list not found', 'warning')
+            return render_template('index.html')
+        flash('Added item to Local Storage', 'success')
+        return redirect(url_for('routes.shopping_list', id=id))
     else:
-        item_name = request.form.get('item_name')
-        item_quantity = request.form.get('item_quantity')
-
-        if not item_name or not item_quantity:
-            flash('Item name and quantity are required', 'danger')
-        else:
-            new_item = Item(name=item_name, quantity=item_quantity, shopping_list_id=id)
-            db.session.add(new_item)
-            db.session.commit()
-            flash('Item added successfully', 'success')
+        new_item = Item(
+            name=name, quantity=quantity, shopping_list_id=id)
+        db.session.add(new_item)
+        db.session.commit()
+        flash('Item added successfully', 'success')
 
     return redirect(url_for('routes.shopping_list', id=id))
 
-@routes.route('/delete_shopping_list/<id>', methods=['POST'])
+
+@routes.route('/delete_shopping_list/<id>', methods=['DELETE'])
 def delete_shopping_list(id):
     shopping_list = ShoppingList.query.get(id)
 
