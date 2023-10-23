@@ -43,7 +43,7 @@
     <section id="add_item">
         <h4>Add Item</h4>
         <form action="/add_item" method="POST">
-            <input type="hidden" value="{{shopping_list.id}}">
+            <input name="id" type="hidden" value="{{shopping_list.id}}">
             <label for="item_name">Item Name:</label>
             <input type="text" id="item_name" name="item_name" required>
             <label for="item_quantity">Quantity:</label>

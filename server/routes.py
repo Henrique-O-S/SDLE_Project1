@@ -76,26 +76,30 @@ def check_id():
     id = request.args.get('id')  # Get the ID from the query parameters
     return redirect(url_for('routes.shopping_list', id=id))
 
-@routes.route('/add_item/<id>', methods=['POST'])
-def add_item(id):
+@routes.route('/add_item', methods=['POST'])
+def add_item():
     # Get the shopping list based on the provided ID
-    shopping_list = ShoppingList.query.get(id)
-
+    data = request.get_json()
+    id = data.get('id')
+    shopping_list = get_list(id)
     if shopping_list is None:
-        flash('Shopping list not found', 'warning')
+        print('passou1')
+        return jsonify({'type': 'warning', 'message': 'Shopping list not found'})
     else:
-        item_name = request.form.get('item_name')
-        item_quantity = request.form.get('item_quantity')
-
-        if not item_name or not item_quantity:
-            flash('Item name and quantity are required', 'danger')
+        name = data.get('name')
+        quantity = data.get('quantity')
+        if not name:
+            print('passou2')
+            return jsonify({'type': 'warning', 'message': 'Item name is required'})
+        if not quantity or quantity == '0':
+            print('passou3')
+            return jsonify({'type': 'warning', 'message': 'Item quantity is required'})
         else:
-            new_item = Item(name=item_name, quantity=item_quantity, shopping_list_id=id)
+            new_item = Item(name=name, quantity=quantity, shopping_list_id=id)
             db.session.add(new_item)
             db.session.commit()
-            flash('Item added successfully', 'success')
-
-    return redirect(url_for('routes.shopping_list', id=id))
+            print('passou4')
+            return jsonify({'type': 'success', 'message': 'Item added to shopping list'})
 
 @routes.route('/delete_shopping_list/<id>', methods=['POST'])
 def delete_shopping_list(id):

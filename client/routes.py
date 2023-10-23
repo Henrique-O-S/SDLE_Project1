@@ -92,15 +92,15 @@ def shopping_list():
 @routes.route('/add_item', methods=['POST'])
 def add_item():
     if request.method == 'POST':
-        name = request.form.get('text')
-        quantity = request.form.get('quantity')
-        id = request.form.get('shopping_list_id')
+        name = request.form.get('item_name')
+        quantity = request.form.get('item_quantity')
+        id = request.form.get('id')
 
         if not name:
-            flash('Item name is required', 'error')
+            flash('Item name is required', 'warning')
             return redirect(url_for('routes.shopping_list', id=id))
         if not quantity or quantity == '0':
-            flash('Item quantity is required', 'error')
+            flash('Item quantity is required', 'warning')
             return redirect(url_for('routes.shopping_list', id=id))
         payload = {
             'id': id,
@@ -115,17 +115,16 @@ def add_item():
     if response_data['type'] == 'warning':
         shopping_list = get_list(id)
         if shopping_list is None:
-            flash('Shopping list not found', 'warning')
+            flash(response_data['message'], 'warning')
             return render_template('index.html')
-        flash('Added item to Local Storage', 'success')
-        return redirect(url_for('routes.shopping_list', id=id))
-    else:
-        new_item = Item(
-            name=name, quantity=quantity, shopping_list_id=id)
+        new_item = Item(name=name, quantity=quantity, shopping_list_id=id)
         db.session.add(new_item)
         db.session.commit()
-        flash('Item added successfully', 'success')
-
+        flash('Added item to Local Storage', 'success')
+        return redirect(url_for('routes.shopping_list', id=id))
+    new_item = Item(name=name, quantity=quantity, shopping_list_id=id)
+    db.session.add(new_item)
+    db.session.commit()
     return redirect(url_for('routes.shopping_list', id=id))
 
 
