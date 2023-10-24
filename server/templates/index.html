@@ -23,7 +23,7 @@
         </h3>
         <h2>Home Page</h2>
         <section id="view_list">
-            <form action="{{ url_for('routes.shopping_list') }}" method="GET">
+            <form action="{{ url_for('routes.view_shopping_list') }}" method="GET">
                 <label for="list_id">View shopping list</label>
                 <input type="text" id="list_id" name="id" placeholder="Type shopping list ID">
                 <button type="submit">Submit</button>

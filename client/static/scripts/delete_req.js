@@ -11,7 +11,7 @@
             // Send a DELETE request to the server
             $.ajax({
                 type: "DELETE",
-                url: "/delete_shopping_list?id=" + formData.id, // Update with the appropriate URL
+                url: "/shopping_list?id=" + formData.id, // Update with the appropriate URL
                 success: function (response) {
                     // Handle the response from the server
                     console.log("Server response:", response);
