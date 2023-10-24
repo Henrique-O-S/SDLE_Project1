@@ -1,5 +1,5 @@
 import json
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from models import *
 import requests
 
@@ -131,7 +131,7 @@ def add_item():
 @routes.route('/delete_shopping_list', methods=['DELETE'])
 def delete_shopping_list():
     if request.method == 'DELETE':
-        id = request.form.get('id')
+        id = request.args.get('id')
 
         response = requests.delete(server_url + 'delete_shopping_list?id=' + id)
 
@@ -150,7 +150,7 @@ def delete_shopping_list():
         db.session.delete(shopping_list)
         db.session.commit()
         flash('Shopping list deleted from Server', 'success')
-        return redirect(url_for('routes.admin'))
+        return jsonify({'type': 'success', 'message': 'Shopping list deleted from Server'})
             
                 
 
