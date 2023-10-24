@@ -83,34 +83,28 @@ def add_item():
     id = data.get('id')
     shopping_list = get_list(id)
     if shopping_list is None:
-        print('passou1')
         return jsonify({'type': 'warning', 'message': 'Shopping list not found'})
     else:
         name = data.get('name')
         quantity = data.get('quantity')
         if not name:
-            print('passou2')
             return jsonify({'type': 'warning', 'message': 'Item name is required'})
         if not quantity or quantity == '0':
-            print('passou3')
             return jsonify({'type': 'warning', 'message': 'Item quantity is required'})
         else:
             new_item = Item(name=name, quantity=quantity, shopping_list_id=id)
             db.session.add(new_item)
             db.session.commit()
-            print('passou4')
             return jsonify({'type': 'success', 'message': 'Item added to shopping list'})
 
-@routes.route('/delete_shopping_list/<id>', methods=['POST'])
-def delete_shopping_list(id):
-    shopping_list = ShoppingList.query.get(id)
-
-    if shopping_list:
-        # Delete the shopping list and its associated items
+@routes.route('/delete_shopping_list', methods=['DELETE'])
+def delete_shopping_list():
+    # Get the shopping list based on the provided ID
+    id = request.args.get('id')
+    shopping_list = get_list(id)
+    if shopping_list is None:
+        return jsonify({'type': 'warning', 'message': 'Shopping list not found'})
+    else:
         db.session.delete(shopping_list)
         db.session.commit()
-        flash('Shopping list deleted successfully', 'success')
-    else:
-        flash('Shopping list not found', 'warning')
-
-    return redirect(url_for('routes.admin'))
+        return jsonify({'type': 'success', 'message': 'Shopping list deleted on Server'})

@@ -108,36 +108,49 @@ def add_item():
             'quantity': quantity,
         }
 
-    response = requests.post(server_url + 'add_item', json=payload)
+        response = requests.post(server_url + 'add_item', json=payload)
 
-    response_data = response.json()
+        response_data = response.json()
 
-    if response_data['type'] == 'warning':
-        shopping_list = get_list(id)
-        if shopping_list is None:
-            flash(response_data['message'], 'warning')
-            return render_template('index.html')
+        if response_data['type'] == 'warning':
+            shopping_list = get_list(id)
+            if shopping_list is None:
+                flash(response_data['message'], 'warning')
+                return render_template('index.html')
+            new_item = Item(name=name, quantity=quantity, shopping_list_id=id)
+            db.session.add(new_item)
+            db.session.commit()
+            flash('Added item to Local Storage', 'success')
+            return redirect(url_for('routes.shopping_list', id=id))
         new_item = Item(name=name, quantity=quantity, shopping_list_id=id)
         db.session.add(new_item)
         db.session.commit()
-        flash('Added item to Local Storage', 'success')
         return redirect(url_for('routes.shopping_list', id=id))
-    new_item = Item(name=name, quantity=quantity, shopping_list_id=id)
-    db.session.add(new_item)
-    db.session.commit()
-    return redirect(url_for('routes.shopping_list', id=id))
 
 
-@routes.route('/delete_shopping_list/<id>', methods=['DELETE'])
-def delete_shopping_list(id):
-    shopping_list = ShoppingList.query.get(id)
+@routes.route('/delete_shopping_list', methods=['DELETE'])
+def delete_shopping_list():
+    if request.method == 'DELETE':
+        id = request.form.get('id')
 
-    if shopping_list:
-        # Delete the shopping list and its associated items
+        response = requests.delete(server_url + 'delete_shopping_list?id=' + id)
+
+        response_data = response.json()
+
+        if response_data['type'] == 'warning':
+            shopping_list = get_list(id)
+            if shopping_list is None:
+                flash(response_data['message'], 'warning')
+                return redirect(url_for('routes.admin'))
+            db.session.delete(shopping_list)
+            db.session.commit()
+            flash('Shopping list not found on Server, deleted locally', 'warning')
+            return redirect(url_for('routes.admin'))
+        shopping_list = get_list(id)  
         db.session.delete(shopping_list)
         db.session.commit()
-        flash('Shopping list deleted successfully', 'success')
-    else:
-        flash('Shopping list not found', 'warning')
+        flash('Shopping list deleted from Server', 'success')
+        return redirect(url_for('routes.admin'))
+            
+                
 
-    return redirect(url_for('routes.admin'))

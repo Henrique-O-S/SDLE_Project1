@@ -1,42 +1,48 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Shopping List Client</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    </head>
-    <header>
-        <h1>
-            <a href="{{ url_for('routes.home') }}">Shopping List Application</a>
-        </h1>
-    </header>
-    <body>
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        {% for message in messages %}
-        <div class="message">{{ message }}</div>
+
+<head>
+    <title>Shopping List Client</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='scripts/delete_req.js') }}"></script>
+</head>
+<header>
+    <h1>
+        <a href="{{ url_for('routes.home') }}">Shopping List Application</a>
+    </h1>
+</header>
+
+<body>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+    <div class="message">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <h3>
+        <a href="{{ url_for('routes.home') }}">Home Page</a>
+    </h3>
+    <h2>Admin Page</h2>
+    <h4>All Shopping Lists</h4>
+    <ul>
+        {% for shopping_list in shopping_lists %}
+        <li>
+            <div class="shopping_list">
+                [{{ shopping_list.id }}]
+                <a href="{{ url_for('routes.shopping_list', id=shopping_list.id) }}">
+                    {{ shopping_list.name }}
+                </a>
+            </div>
+
+            <form class="deleteForm">
+                <input type="hidden" class="id" name="id" value="{{ shopping_list.id }}">
+                <button type="submit" class="delete">Delete</button>
+            </form>
+        </li>
         {% endfor %}
-        {% endif %}
-        {% endwith %}
-        <h3>
-            <a href="{{ url_for('routes.home') }}">Home Page</a>
-        </h3>
-        <h2>Admin Page</h2>
-        <h4>All Shopping Lists</h4>
-        <ul>
-            {% for shopping_list in shopping_lists %}
-            <li>
-                <div class="shopping_list">
-                    [{{ shopping_list.id }}]
-                    <a href="{{ url_for('routes.shopping_list', id=shopping_list.id) }}">
-                        {{ shopping_list.name }}
-                    </a>
-                </div>                
-                
-                <form method="POST" action="{{ url_for('routes.delete_shopping_list', id=shopping_list.id) }}">
-                    <button type="submit" class="delete">Delete</button>
-                </form>
-            </li>
-            {% endfor %}
-        </ul>
-    </body>
+
+    </ul>
+</body>
+
 </html>
