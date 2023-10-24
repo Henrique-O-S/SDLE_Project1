@@ -43,7 +43,6 @@ def shopping_list():
 
         shopping_list_data = response_data['shopping_list']
         items_data = response_data['items']
-        print(items_data)
         shopping_list = ShoppingList.from_json(shopping_list_data)
         items = [Item.from_json(item) for item in items_data]
         for item in items:
@@ -145,9 +144,6 @@ def item():
         id = request.args.get('item_id')
         shopping_list_id = request.args.get('shopping_list_id')
         item_name = request.args.get('item_name')
-        print(id)
-        print(shopping_list_id)
-        print(item_name)
         response = requests.delete(server_url + 'item?shopping_list_id=' + shopping_list_id + '&item_name=' + item_name)
         response_data = response.json()
         if response_data['type'] == 'warning':
@@ -163,5 +159,4 @@ def item():
         db.session.delete(item)
         db.session.commit()
         flash('Item deleted from Server', 'success')
-        print('passou3')
         return jsonify({'type': 'success', 'message': 'Item deleted from Server'})

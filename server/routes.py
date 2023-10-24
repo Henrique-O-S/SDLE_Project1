@@ -88,15 +88,12 @@ def item():
         id = request.args.get('item_id')
         shopping_list_id = request.args.get('shopping_list_id')
         item_name = request.args.get('item_name')
-        print(shopping_list_id, item_name)
         item = get_item(shopping_list_id, item_name)
         if item is None:
-            print('passou1')
             return jsonify({'type': 'warning', 'message': 'Item already deleted'})
         else:
             db.session.delete(item)
             db.session.commit()
-            print('passou2')
             return jsonify({'type': 'success', 'message': 'Item deleted on Server'})
 
             
