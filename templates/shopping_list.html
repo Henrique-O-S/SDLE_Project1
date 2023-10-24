@@ -3,6 +3,7 @@
 
 <head>
     <title>Shopping List</title>
+    <script src="{{ url_for('static', filename='scripts/script.js') }}"></script>
 </head>
 
 <body>
@@ -20,9 +21,15 @@
     </form>
     <ul>
         {% for item in items %}
-        <li>{{ item.name }} | {{item.quantity}}</li>
+            <li>
+            {{ item.name }} | 
+            <span id="quantity_{{ item.id }}">{{ item.quantity }}</span>
+            <input type="number" id="quantity_input_{{ item.id }}" value="{{ item.quantity }}">
+            <button onclick="updateQuantity({{ item.id }})">Update Quantity</button>
+            </li>
         {% endfor %}
     </ul>
+      
     <!-- Add buttons or forms for adding new items or other functionality -->
 </body>
 

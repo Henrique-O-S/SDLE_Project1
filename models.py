@@ -32,3 +32,8 @@ def get_items_in_shopping_list(shopping_list_id):
 
 def get_random_id():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+
+def update_quantity(shopping_list_id, item_id, new_quantity):
+    item = Item.query.filter_by(shopping_list_id=shopping_list_id, id=item_id).first()
+    item.quantity = new_quantity
+    db.session.commit()
