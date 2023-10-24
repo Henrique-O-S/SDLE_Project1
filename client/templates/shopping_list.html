@@ -4,6 +4,8 @@
 <head>
     <title>Shopping List Client</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='scripts/delete_req.js') }}"></script>
 </head>
 <header>
     <h1>
@@ -36,14 +38,19 @@
             <div class="item">
                 {{ item.name }} [{{ item.quantity }}]
             </div>
-            <button type="submit" class="delete">Delete Item</button>
+            <form class="deleteFormITEM">
+                <input type="hidden" class="item_id" name="item_id" value="{{ item.id }}">
+                <input type="hidden" class="item_name" name="item_name" value="{{ item.name }}">
+                <input type="hidden" class="shopping_list_id" name="shopping_list_id" value="{{ shopping_list.id }}">
+                <button type="submit" class="delete">Delete</button>
+            </form>
         </li>
         {% endfor %}
     </ul>
     <section id="add_item">
         <h4>Add Item</h4>
-        <form action="/add_item" method="POST">
-            <input name="id" type="hidden" value="{{shopping_list.id}}">
+        <form action="/item" method="POST">
+            <input type="hidden" class="shopping_list_id" name="shopping_list_id" value="{{ shopping_list.id }}">
             <label for="item_name">Item Name:</label>
             <input type="text" id="item_name" name="item_name" required>
             <label for="item_quantity">Quantity:</label>

@@ -101,12 +101,12 @@ def shopping_list():
         flash('Shopping list deleted from Server', 'success')
         return jsonify({'type': 'success', 'message': 'Shopping list deleted from Server'})
 
-@routes.route('/add_item', methods=['POST'])
-def add_item():
+@routes.route('/item', methods=['POST', 'DELETE'])
+def item():
     if request.method == 'POST':
         name = request.form.get('item_name')
         quantity = request.form.get('item_quantity')
-        id = request.form.get('id')
+        id = request.form.get('shopping_list_id')
 
         if not name:
             flash('Item name is required', 'warning')
@@ -120,14 +120,12 @@ def add_item():
             'quantity': quantity,
         }
 
-        response = requests.post(server_url + 'add_item', json=payload)
+        response = requests.post(server_url + 'item', json=payload)
 
         response_data = response.json()
 
         if response_data['type'] == 'warning':
             if response_data['message'] == 'Shopping list not found':
-                db.session.delete(shopping_list)
-                db.session.commit()
                 return render_template('index.html')
             shopping_list = get_list(id)
             if shopping_list is None:
@@ -142,3 +140,28 @@ def add_item():
         db.session.add(new_item)
         db.session.commit()
         return redirect(url_for('routes.shopping_list', id=id))
+    
+    elif request.method == 'DELETE':
+        id = request.args.get('item_id')
+        shopping_list_id = request.args.get('shopping_list_id')
+        item_name = request.args.get('item_name')
+        print(id)
+        print(shopping_list_id)
+        print(item_name)
+        response = requests.delete(server_url + 'item?shopping_list_id=' + shopping_list_id + '&item_name=' + item_name)
+        response_data = response.json()
+        if response_data['type'] == 'warning':
+            item = get_item(shopping_list_id, item_name)
+            if item is None:
+                flash(response_data['message'], 'warning')
+                return redirect(url_for('routes.admin'))
+            db.session.delete(item)
+            db.session.commit()
+            flash('Item already deleted on Server, deleted locally', 'warning')
+            return jsonify({'type': 'warning', 'message': response_data['message']})
+        item = get_item(shopping_list_id, item_name)
+        db.session.delete(item)
+        db.session.commit()
+        flash('Item deleted from Server', 'success')
+        print('passou3')
+        return jsonify({'type': 'success', 'message': 'Item deleted from Server'})
