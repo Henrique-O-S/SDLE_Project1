@@ -113,6 +113,10 @@ def add_item():
         response_data = response.json()
 
         if response_data['type'] == 'warning':
+            if response_data['message'] == 'Shopping list not found':
+                db.session.delete(shopping_list)
+                db.session.commit()
+                return render_template('index.html')
             shopping_list = get_list(id)
             if shopping_list is None:
                 flash(response_data['message'], 'warning')
@@ -151,6 +155,3 @@ def delete_shopping_list():
         db.session.commit()
         flash('Shopping list deleted from Server', 'success')
         return jsonify({'type': 'success', 'message': 'Shopping list deleted from Server'})
-            
-                
-
