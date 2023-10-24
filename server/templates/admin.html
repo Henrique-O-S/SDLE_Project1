@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Admin Page</title>
+        <title>Shopping List Server</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     </head>
     <header>
@@ -24,9 +24,6 @@
                         {{shopping_list.name}}
                     </a>
                 </div>
-                <form method="POST" action="{{ url_for('routes.delete_shopping_list', id=shopping_list.id) }}">
-                    <button type="submit" class="delete">Delete</button>
-                </form>
             </li>
             {% endfor %}
         </ul>

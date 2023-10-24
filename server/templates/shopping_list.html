@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Shopping List</title>
+        <title>Shopping List Server</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     </head>
     <header>
@@ -26,22 +26,8 @@
                 <div class="item">
                     {{ item.name }} [{{ item.quantity }}]
                 </div>
-                <!-- form method="DELETE" action=(delete_route, item_id) -->
-                <button type="submit" class="delete">Delete Item</button>
             </li>
             {% endfor %}
         </ul>
-        <section id="add_item">
-            <h4>Add Item</h4>
-            <form method="POST" action="{{ url_for('routes.add_item', id=shopping_list.id) }}">
-                <label for="item_name">Item Name:</label>
-                <input type="text" id="item_name" name="item_name" required>
-                <label for="item_quantity">Quantity:</label>
-                <input type="number" id="item_quantity" name="item_quantity" required>
-                <div class="item_button">
-                    <button type="submit" class="item_button">Add New Item</button>
-                </div>
-            </form>
-        </section>
     </body>
 </html>

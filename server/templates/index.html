@@ -22,13 +22,6 @@
             <a href="{{ url_for('routes.admin') }}">Admin Page</a>
         </h3>
         <h2>Home Page</h2>
-        <section id="create_list">
-            <form action="/create_shopping_list" method="POST">
-                <label for="list_name">New shopping list</label>
-                <input type="text" id="list_name" name="name" required placeholder="Type name for new list">
-                <button type="submit">Add</button>
-            </form>
-        </section>
         <section id="view_list">
             <form action="{{ url_for('routes.check_id') }}" method="GET">
                 <label for="list_id">View shopping list</label>
