@@ -133,7 +133,7 @@ def delete_shopping_list():
     if request.method == 'DELETE':
         id = request.args.get('id')
 
-        response = requests.delete(server_url + 'delete_shopping_list?id=' + id)
+        response = requests.delete(server_url + 'shopping_list?id=' + id)
 
         response_data = response.json()
 
