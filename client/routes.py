@@ -78,42 +78,7 @@ def shopping_list():
 
         # Redirect to the newly created shopping list
         return redirect(url_for('routes.shopping_list', id=random_id))
-
-
-@routes.route('/shopping_list', methods=['GET', 'PUT'])
-def shopping_list():
-    if request.method == 'GET':
-        id = request.args.get('id')  # Get the ID from the query parameters
-
-        payload = {
-            'id': id,
-        }
-
-        response = requests.post(server_url + 'shopping_list', json=payload)
-
-        response_data = response.json()
-
-        if response_data['type'] == 'warning':
-            shopping_list = get_list(id)
-            if shopping_list is None:
-                flash('Shopping list not found', 'warning')
-                return render_template('index.html')
-            items = get_items_in_list(id)
-            flash('Retrieved Shopping list from Local Storage', 'success')
-            return render_template('shopping_list.html', shopping_list=shopping_list, items=items)
-
-        shopping_list_data = response_data['shopping_list']
-        items_data = response_data['items']
-        print(items_data)
-        shopping_list = ShoppingList.from_json(shopping_list_data)
-        items = [Item.from_json(item) for item in items_data]
-        for item in items:
-            if not check_item_existence(item.id):
-                db.session.add(item)
-                db.session.commit()
-        flash('Retrieved Shopping list from Server', 'success')
-        return render_template('shopping_list.html', shopping_list=shopping_list, items=items)
-
+    
     elif request.method == 'PUT':
         name = request.form.get('item_name')
         quantity = request.form.get('new_quantity')

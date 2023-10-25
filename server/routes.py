@@ -129,13 +129,6 @@ def shopping_lists():
     return jsonify({'type': 'success', 'message': 'Shopping lists found', 'shopping_lists': shopping_lists_data})
 
 
-@routes.route('/shopping_lists', methods=['GET'])
-def shopping_lists():
-    shopping_lists = get_shopping_lists()
-    shopping_lists_data = [json.dumps(shopping_list.to_dict())for shopping_list in shopping_lists]
-    return jsonify({'type': 'success', 'message': 'Shopping lists found', 'shopping_lists': shopping_lists_data})
-
-
 @routes.route('/view_shopping_list', methods=['GET'])
 def view_shopping_list():
     if request.method == 'GET':
