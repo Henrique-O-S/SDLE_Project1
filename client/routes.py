@@ -55,38 +55,85 @@ def create_shopping_list():
         return redirect(url_for('routes.shopping_list', id=random_id))
 
 
-@routes.route('/shopping_list', methods=['GET'])
+@routes.route('/shopping_list', methods=['GET', 'PUT'])
 def shopping_list():
-    id = request.args.get('id')  # Get the ID from the query parameters
+    if request.method == 'GET':
+        id = request.args.get('id')  # Get the ID from the query parameters
 
-    payload = {
-        'id': id,
-    }
+        payload = {
+            'id': id,
+        }
 
-    response = requests.post(server_url + 'shopping_list', json=payload)
+        response = requests.post(server_url + 'shopping_list', json=payload)
 
-    response_data = response.json()
+        response_data = response.json()
 
-    if response_data['type'] == 'warning':
-        shopping_list = get_list(id)
-        if shopping_list is None:
-            flash('Shopping list not found', 'warning')
-            return render_template('index.html')
-        items = get_items_in_list(id)
-        flash('Retrieved Shopping list from Local Storage', 'success')
+        if response_data['type'] == 'warning':
+            shopping_list = get_list(id)
+            if shopping_list is None:
+                flash('Shopping list not found', 'warning')
+                return render_template('index.html')
+            items = get_items_in_list(id)
+            flash('Retrieved Shopping list from Local Storage', 'success')
+            return render_template('shopping_list.html', shopping_list=shopping_list, items=items)
+
+        shopping_list_data = response_data['shopping_list']
+        items_data = response_data['items']
+        print(items_data)
+        shopping_list = ShoppingList.from_json(shopping_list_data)
+        items = [Item.from_json(item) for item in items_data]
+        for item in items:
+            if not check_item_existence(item.id):
+                db.session.add(item)
+                db.session.commit()
+        flash('Retrieved Shopping list from Server', 'success')
         return render_template('shopping_list.html', shopping_list=shopping_list, items=items)
 
-    shopping_list_data = response_data['shopping_list']
-    items_data = response_data['items']
-    print(items_data)
-    shopping_list = ShoppingList.from_json(shopping_list_data)
-    items = [Item.from_json(item) for item in items_data]
-    for item in items:
-        if not check_item_existence(item.id):
-            db.session.add(item)
+    elif request.method == 'PUT':
+        name = request.form.get('item_name')
+        quantity = request.form.get('new_quantity')
+        shopping_list_id = request.form.get('shopping_list_id')
+
+        payload = {
+            'name': name,
+            'quantity': quantity,
+            'shopping_list_id': shopping_list_id
+        }
+
+        response = requests.put(server_url + 'shopping_list_id', json=payload)
+
+        response_data = response.json()
+
+        if response_data['type'] == 'warning':
+            if response_data['message'] == 'Shopping list not found':
+                return render_template('index.html')
+            elif response_data['message'] == 'Item not found':
+                return render_template('index.html')
+            else:
+                return render_template('index.html')
+            shopping_list = get_list(shopping_list_id)
+            if shopping_list is None:
+                flash(response_data['message'], 'warning')
+                return render_template('index.html')
+            item = get_item(name, shopping_list_id)
+            if item is None:
+                flash(response_data['message'], 'warning')
+                return render_template('index.html')
+            db.session.delete(item)
             db.session.commit()
-    flash('Retrieved Shopping list from Server', 'success')
-    return render_template('shopping_list.html', shopping_list=shopping_list, items=items)
+            new_item = Item(name=name, quantity=quantity, shopping_list_id=shopping_list_id)
+            db.session.add(new_item)
+            db.session.commit()
+            flash('Updated quantity in Local Storage', 'success')
+            return redirect(url_for('routes.shopping_list', shopping_list_id=shopping_list_id))
+        item = get_item(name, shopping_list_id)
+        db.session.delete(item)
+        db.session.commit()
+        new_item = Item(name=name, quantity=quantity, shopping_list_id=shopping_list_id)
+        db.session.add(new_item)
+        db.session.commit()
+        return redirect(url_for('routes.shopping_list', id=id))
+
 
 
 @routes.route('/add_item', methods=['POST'])

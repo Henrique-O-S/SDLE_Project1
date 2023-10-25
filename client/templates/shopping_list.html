@@ -4,6 +4,8 @@
 <head>
     <title>Shopping List Client</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='scripts/script.js') }}"></script>
 </head>
 <header>
     <h1>
@@ -32,14 +34,15 @@
     <ul>
         {% for item in items %}
         <li>
-            </form>
             <div class="item">
-                {{ item.name }} [{{ item.quantity }}]
+                {{ item.name }}
+                <input type="number" id="quantity_{{ item.name }}" value="{{ item.quantity }}">
+                <button onclick="updateQuantity('{{item.name}}', '{{shopping_list.id}}')">Update Quantity</button>
             </div>
             <button type="submit" class="delete">Delete Item</button>
         </li>
         {% endfor %}
-    </ul>
+    </ul>    
     <section id="add_item">
         <h4>Add Item</h4>
         <form action="/add_item" method="POST">

@@ -39,7 +39,7 @@ def create_shopping_list():
 
 
 
-@routes.route('/shopping_list', methods=['GET', 'POST'])
+@routes.route('/shopping_list', methods=['GET', 'POST', 'PUT'])
 def shopping_list():
     if request.method == 'GET':
         id = request.args.get('id')  # Get the ID from the query parameters
@@ -51,6 +51,30 @@ def shopping_list():
 
         items = get_items_in_list(id)
         return render_template('shopping_list.html', shopping_list=shopping_list, items=items)
+    elif request.method == 'PUT':
+        data = request.get_json()
+        name = data.get('name')
+        quantity = data.get('quantity')
+        shopping_list_id = data.get('shopping_list_id')
+
+        shopping_list = get_list(shopping_list_id)
+        if shopping_list is None:
+            return jsonify({'type': 'warning', 'message': 'Shopping list not found'})
+        
+        item = get_item(name, shopping_list_id)
+        if item is None:
+            return jsonify({'type': 'warning', 'message': 'Item not found'})
+        
+        if not quantity:
+            return jsonify({'type': 'warning', 'message': 'Item quantity is required'})
+        
+        db.session.delete(item)
+        db.session.commit()
+        new_item = Item(name=name, quantity=quantity, shopping_list_id=id)
+        db.session.add(new_item)
+        db.session.commit()
+        return jsonify({'type': 'success', 'message': 'Quantity updated'})
+    
     else:
         data = request.get_json()
         id = data.get('id')

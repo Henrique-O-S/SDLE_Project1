@@ -51,6 +51,9 @@ def get_shopping_lists():
 def get_items_in_list(shopping_list_id):
     return Item.query.filter_by(shopping_list_id=shopping_list_id).all()
 
+def get_item(item_name, shopping_list_id):
+    return Item.query.get(name=item_name, shopping_list_id=shopping_list_id)
+
 def get_random_id():
     return str(uuid.uuid4())
 
