@@ -20,7 +20,7 @@
             <li>
                 <div class="shopping_list">
                     [{{ shopping_list.id }}]
-                    <a href="{{ url_for('routes.shopping_list', id=shopping_list.id) }}">
+                    <a href="{{ url_for('routes.view_shopping_list', id=shopping_list.id) }}">
                         {{shopping_list.name}}
                     </a>
                 </div>

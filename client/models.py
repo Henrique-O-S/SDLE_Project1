@@ -45,6 +45,9 @@ class Item(db.Model):
 def get_list(shopping_list_id):
     return ShoppingList.query.get(shopping_list_id)
 
+def get_item(shopping_list_id, name):
+    return Item.query.filter_by(shopping_list_id=shopping_list_id, name=name).first()
+
 def get_shopping_lists():
     return ShoppingList.query.all()
 
