@@ -21,7 +21,7 @@ def admin():
 
 
 
-@routes.route('/shopping_list', methods=['GET', 'POST', 'DELETE'])
+@routes.route('/shopping_list', methods=['GET', 'POST', 'DELETE', 'PUT'])
 def shopping_list():
     if request.method == 'GET':
         id = request.args.get('id')  # Get the ID from the query parameters
@@ -73,7 +73,7 @@ def shopping_list():
         if shopping_list is None:
             return jsonify({'type': 'warning', 'message': 'Shopping list not found'})
         
-        item = get_item(name, shopping_list_id)
+        item = get_item(shopping_list_id, name)
         if item is None:
             return jsonify({'type': 'warning', 'message': 'Item not found'})
         
@@ -82,7 +82,7 @@ def shopping_list():
         
         db.session.delete(item)
         db.session.commit()
-        new_item = Item(name=name, quantity=quantity, shopping_list_id=id)
+        new_item = Item(name=name, quantity=quantity, shopping_list_id=shopping_list_id)
         db.session.add(new_item)
         db.session.commit()
         return jsonify({'type': 'success', 'message': 'Quantity updated'})

@@ -23,7 +23,7 @@ def admin():
     return render_template('admin.html', shopping_lists=shopping_lists)
 
 
-@routes.route('/shopping_list', methods=['GET', 'POST', 'DELETE'])
+@routes.route('/shopping_list', methods=['GET', 'POST', 'DELETE', 'PUT'])
 def shopping_list():
     if request.method == 'GET':
         id = request.args.get('id')  # Get the ID from the query parameters
@@ -79,10 +79,33 @@ def shopping_list():
         # Redirect to the newly created shopping list
         return redirect(url_for('routes.shopping_list', id=random_id))
     
+    elif request.method == 'DELETE':
+        id = request.args.get('id')
+
+        response = requests.delete(server_url + 'shopping_list?id=' + id)
+
+        response_data = response.json()
+
+        if response_data['type'] == 'warning':
+            shopping_list = get_list(id)
+            if shopping_list is None:
+                flash(response_data['message'], 'warning')
+                return redirect(url_for('routes.admin'))
+            db.session.delete(shopping_list)
+            db.session.commit()
+            flash('Shopping list not found on Server, deleted locally', 'warning')
+            return redirect(url_for('routes.admin'))
+        shopping_list = get_list(id)  
+        db.session.delete(shopping_list)
+        db.session.commit()
+        flash('Shopping list deleted from Server', 'success')
+        return jsonify({'type': 'success', 'message': 'Shopping list deleted from Server'})
+    
     elif request.method == 'PUT':
-        name = request.form.get('item_name')
-        quantity = request.form.get('new_quantity')
-        shopping_list_id = request.form.get('shopping_list_id')
+        data = request.get_json()
+        name = data.get('item_name')
+        quantity = data.get('new_quantity')
+        shopping_list_id = data.get('shopping_list_id')
 
         payload = {
             'name': name,
@@ -90,7 +113,7 @@ def shopping_list():
             'shopping_list_id': shopping_list_id
         }
 
-        response = requests.put(server_url + 'shopping_list_id', json=payload)
+        response = requests.put(server_url + 'shopping_list', json=payload)
 
         response_data = response.json()
 
@@ -99,13 +122,13 @@ def shopping_list():
                 return render_template('index.html')
             elif response_data['message'] == 'Item not found':
                 return render_template('index.html')
-            else:
+            elif response_data['message'] == 'Item quantity is required':
                 return render_template('index.html')
             shopping_list = get_list(shopping_list_id)
             if shopping_list is None:
                 flash(response_data['message'], 'warning')
                 return render_template('index.html')
-            item = get_item(name, shopping_list_id)
+            item = get_item(shopping_list_id, name)
             if item is None:
                 flash(response_data['message'], 'warning')
                 return render_template('index.html')
@@ -115,14 +138,15 @@ def shopping_list():
             db.session.add(new_item)
             db.session.commit()
             flash('Updated quantity in Local Storage', 'success')
-            return redirect(url_for('routes.shopping_list', shopping_list_id=shopping_list_id))
-        item = get_item(name, shopping_list_id)
+            return jsonify({'type': 'warning', 'message': response_data['message']})
+        item = get_item(shopping_list_id, name)
         db.session.delete(item)
         db.session.commit()
         new_item = Item(name=name, quantity=quantity, shopping_list_id=shopping_list_id)
         db.session.add(new_item)
         db.session.commit()
-        return redirect(url_for('routes.shopping_list', id=id))
+        flash('Updated quantity in the Server', 'success')
+        return jsonify({'type': 'success', 'message': 'Item quantity updated on Server'})
 
 @routes.route('/item', methods=['POST', 'DELETE'])
 def item():

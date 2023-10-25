@@ -16,22 +16,22 @@ function updateQuantity(item_name, shopping_list_id) {
         shopping_list_id: shopping_list_id
     };
 
+    console.log(data);
+
     $.ajax({
         type: "PUT",
         url: "shopping_list",
-        data: data,
-        dataType: 'text',
-        success: function (data) {
-
-            let final = JSON.parse(data);
+        contentType: "application/json",
+        data: JSON.stringify(data),
+        success: function (response) {
 
             // Update the displayed quantity if the update was successful
             const quantityDisplayElement = document.getElementById(`quantity_${item_name}`);
-            quantityDisplayElement.textContent = final.new_quantity;
+            quantityDisplayElement.textContent = new_quantity;
         },
-        error: function (data) {
+        error: function (error) {
             // Handle any errors or display error messages to the user
-            console.error(data.error);
+            console.error("Error:", error);
         }
     });
     return false;

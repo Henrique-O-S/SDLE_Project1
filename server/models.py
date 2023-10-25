@@ -44,17 +44,8 @@ def get_shopping_lists():
 def get_items_in_list(shopping_list_id):
     return Item.query.filter_by(shopping_list_id=shopping_list_id).all()
 
-def get_item(item_name, shopping_list_id):
-    return Item.query.get(name=item_name, shopping_list_id=shopping_list_id)
-
 def get_random_id():
     return str(uuid.uuid4())
-
-def update_quantity(shopping_list_id, item_id, new_quantity):
-    item = Item.query.filter_by(shopping_list_id=shopping_list_id, id=item_id).first()
-    item.quantity = new_quantity
-    db.session.commit()
-
 
 def check_item_existence(item_id):
     # Check if an item with the specified item_id exists in the database
