@@ -37,3 +37,17 @@
         - Allows system to verify validity of the context object
 
 ### PARTITIONING
+
+- Consistent hashing variation to distribute the lead across multiple hosts (inside a circular ring)
+- Each node has multiple points on the ring (virtual nodes)
+- Assignment of positions on it is random
+- Each node becomes responsible for the region in the ring between it and its predecessor node on the ring.
+    - Departure or arrival of a node only affects immediate neighbors
+
+### REPLICATION (N)
+
+- Needed to achieve high availability and durability
+- Each data is replicated at N hosts
+- Coordinator node is responsible for the replication of data that fall within its range (N-1 successors, only distinct physical nodes)
+- Preference list: list of nodes that is responsible for storing a particular key
+    - Every node in the system can determine it for any key
