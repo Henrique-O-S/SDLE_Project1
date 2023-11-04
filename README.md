@@ -16,9 +16,9 @@ Clients should also be able to access the same shopping list concurrently and it
 
 At any point, in case of data discrepancies among any intervients of the system (either server to server or client to server) a merge shall be conducted. In case of conflicts, the last updated data will remain. Conflicts are always solved in the reads, that way writes are never rejected.
 
-### Interface
+### Methods
 
-- get(key) and put(key, context, object), objects are associated with a key.
+- get(key) and put(key, context, object), objects(shopping list data) are associated with a key(shopping list ID).
 - get:
     - Locates object replicas (with that key) in storage system
     - Returns single object or list of objects with conflicting versions, along with a context
