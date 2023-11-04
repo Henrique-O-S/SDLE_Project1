@@ -51,3 +51,32 @@
 - Coordinator node is responsible for the replication of data that fall within its range (N-1 successors, only distinct physical nodes)
 - Preference list: list of nodes that is responsible for storing a particular key
     - Every node in the system can determine it for any key
+
+### DATA VERSIONING
+
+- Dynamo provides eventual consistency
+    - Updates propagated to all replicas asynchronously
+- Dynamo treats the result of each modification as a new and immutable version of the data
+    - Multiple versions of an object can be present at the same time
+- Dynamo uses vector clocks to capture causality between different versions of the same object
+    - They are a list of (node, counter)
+    - If the counters on the first object <= all of the nodes in the second clock then the first is an ancestor of the second and can be forgotten. Otherwise, the two changes are considered to be in conflict and require reconciliation.
+- When we update an object, we must pass the context (obtained in the previous read), which contains the vector clock
+    - Due to failures, a node thats not on the first N of the preference list may need to get the job done, and vector clock will grow (+1 node). Because of that its a good practice to limit vector clocks (10)
+
+### GET AND PUT
+
+- Coordinator: node that handles read or write (typically first of the preference list)
+- R is the minimum number of nodes that must participate in a successful read operation
+    - 1 Coordinator node receives request for a get of a key
+    - 2 Coordinator requests all reachable highest N nodes
+    - 3 Waits for R responses
+    - 4 If it receives multiple versions of that key (object) it output all that are causally unrelated (except the ones explained on line 63), and then
+    - 5 Reconciled version is written back --> SUCCESSFUL READ
+- W is the minimum number of nodes that must participate in a successful write operation
+    - 1 Coordinator node receives request for a put of a key
+    - 2 Coordinator generates vector clock for new version, writes it locally
+    - 3 Sends new version (and new vector clock) to the N higher reachable nodes
+    - 4 If at least W-1 respond --> SUCCESSFUL WRITE
+- R and W < N
+
