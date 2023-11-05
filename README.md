@@ -12,7 +12,7 @@ While it may not be of primary importance in this project, we plan to develop a 
 
 ### Database Structure
 
-TO DO
+We plan to implement a key-value stores database using SQLite. That way, each shopping list id, representing a key generated with UUID4 will be associated to JSON data which includes the items present in that shopping list. This approach will eliminate the need for relational queries associated with structured relational databases. Altough those models allow for strong consistency on data, they also cause inefficiencies, limiting scalling and availability.
 
 ### Server Structure
 
@@ -28,7 +28,7 @@ Clients should also be able to access the same shopping list concurrently and it
 
 ### Conflict Handling
 
-At any point, if data discrepancies occur among any participants in the system (either between servers or between clients and servers), a merge process will be initiated. In the event of conflicts, the most recently updated data will take precedence. Conflicts are resolved during read operations, ensuring that write operations are never rejected.
+At any point, if data discrepancies occur among any participants in the system (either between servers or between clients and servers), a merge process will be initiated. In the event of conflicts, the most recently updated data will take precedence. Conflicts are resolved during read operations, ensuring that write operations are never rejected, to protect user experience.
 
 ### Methods
 
@@ -37,7 +37,7 @@ At any point, if data discrepancies occur among any participants in the system (
     - Locates object replicas associated with the provided key in the storage system.
     - Returns either a single object or a list of objects with conflicting versions, along with a context.
 - put:
-    - Determines the placement of replicas based on the key.
+    - The placement of replicas are determined based on the key.
         - Utilizes MD5 hash to generate a 128-bit identifier from the key.
     - Writes the replicas to disk.
     - The context, which encodes system metadata about the object and its version, is stored along with the object. This enables the system to verify the validity of the context object.
