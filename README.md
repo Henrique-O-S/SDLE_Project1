@@ -28,7 +28,7 @@ Clients should also be able to access the same shopping list concurrently and it
 
 ### Conflict Handling
 
-At any point, if data discrepancies occur among any participants in the system (either between servers or between clients and servers), a merge process will be initiated. In the event of conflicts, the most recently updated data will take precedence. Conflicts are resolved during read operations, ensuring that write operations are never rejected, to protect user experience.
+At any point, if data discrepancies occur among any participants in the system (either between servers or between clients and servers), a merge process will be initiated. In the event of conflicts, the most recently updated data will take precedence. Conflicts between causally unrelated data are resolved during read operations, ensuring that write operations are never rejected, to protect user experience.
 
 ### Methods
 
