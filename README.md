@@ -44,6 +44,7 @@ At any point, if data discrepancies occur among any participants in the system (
 
 ### Sistem Design Diagram
 
- ![System Design](/docs/design_draft.drawio.png "Sytem Design")
+<img src="docs/design_draft.drawio.png" width="60%">
 
-This is a reduced example of the designe architeture. In a larger scale each shopping list should contain more replicas.
+
+This is a reduced example of the design architeture. In a larger scale each shopping list should contain more replicas.
