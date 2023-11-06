@@ -12,7 +12,7 @@ While it may not be of primary importance in this project, we plan to develop a 
 
 ### Database Structure
 
-We plan to implement a key-value stores database using SQLite. That way, each shopping list id, representing a key generated with UUID4 will be associated to JSON data which includes the items present in that shopping list. This approach will eliminate the need for relational queries associated with structured relational databases. Altough those models allow for strong consistency on data, they also cause inefficiencies, limiting scalling and availability.
+We plan to implement a key-value stores database using SQLite. That way, each shopping list id, representing a key generated with UUID4 will be associated to JSON data which includes the items present in that shopping list. This approach will eliminate the need for relational queries associated with structured relational databases. Altough those models allow for strong consistency on data, they also cause inefficiencies, limiting scaling and availability.
 
 ### Server Structure
 
@@ -42,9 +42,13 @@ At any point, if data discrepancies occur among any participants in the system (
     - Writes the replicas to disk.
     - The context, which encodes system metadata about the object and its version, is stored along with the object. This enables the system to verify the validity of the context object.
 
+### CRDTs
+
+Regarding the usage of CRDTs, due to the scalability requirements, we are focused on the [DeltaCrdt](https://hexdocs.pm/delta_crdt/DeltaCrdt.html), since it doesn't require transmission of its state with every change made, only of its delta. 
+
 ### Sistem Design Diagram
 
-<img src="docs/design_draft.drawio.png" width="60%">
+<img src="docs/design_draft.drawio.png" width="50%">
 
 
 This is a reduced example of the design architeture. In a larger scale each shopping list should contain more replicas.
