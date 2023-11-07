@@ -44,7 +44,7 @@ At any point, if data discrepancies occur among any participants in the system (
 
 ### CRDTs
 
-Regarding the usage of CRDTs, due to the scalability requirements, we are focused on the [DeltaCrdt](https://hexdocs.pm/delta_crdt/DeltaCrdt.html), since it doesn't require transmission of its state with every change made, only of its delta. 
+Regarding the usage of CRDTs, due to the scalability requirements, we are focused on the [DeltaCrdt](https://hexdocs.pm/delta_crdt/DeltaCrdt.html), since it doesn't require transmission of its state with every change made, only of its delta. That logic will be implemented to the [LWW-Element-Set](https://shuvoshaha7.medium.com/lww-element-set-9afff3310819) CRDT.
 
 ### Sistem Design Diagram
 
