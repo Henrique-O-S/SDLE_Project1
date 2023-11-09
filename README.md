@@ -17,9 +17,9 @@ We plan to implement a key-value stores database using SQLite. That way, each sh
 ### Server Structure
 
 To satisfy the need of creating a local-first shopping list application that allows data sharing among users, it is intended to implement a decentralized distributed architeture. 
-Data storage will be distributed across multiple nodes, which will be able to communicate among themselves to allow data replication, thus providing fault tolerance and reducing data access times. The replication will be asynchronous, meaning it is designed to be an eventually consistent data store; that is all updates reach all replicas eventually.
+Data storage will be distributed across multiple nodes, which will be able to communicate among themselves to allow data replication, thus providing fault tolerance and reducing data access times. The replication will be asynchronous, indicating that it is designed to be an eventually consistent data store, ensuring that all updates reach all replicas eventually. This process typically occurs in batches at predefined intervals, triggered only if the master node has been updated in the meantime.
 
-Each shopping list will be consistently hashed to one of the server nodes, ensuring that each request consistently accesses the same node. This approach also helps balance the load across the nodes. In the event of a failure, the system will detect it through timeouts and subsequently search for a node containing a replica.
+Each shopping list undergoes consistent hashing, ensuring that requests consistently access the same server node and promoting load balancing. In the event of a failure, the system detects it through timeouts, initiating a search for a node containing a replica. Replicas are strategically placed in nodes with the immediately prior index to the master node in the consistent hashing ring, optimizing the search process during failures.
 
 ### Client Interaction
 
