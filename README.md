@@ -25,6 +25,8 @@ Each shopping list undergoes consistent hashing, ensuring that requests consiste
 
 Clients will hold a local data storage, that will remain updated even in case of server failure and will allow to update the server data once it is back to availability.
 Clients should also be able to access the same shopping list concurrently and it should be “always writeable”, where no updates are rejected due to failures or concurrent writes.
+<div style="page-break-after: always;"></div>
+
 
 ### Conflict Handling
 
@@ -35,7 +37,7 @@ At any point, if data discrepancies occur among any participants in the system (
 - get(key) and put(key, context, object), objects(shopping list data) are associated with a key(shopping list ID).
 - get:
     - Locates object replicas associated with the provided key in the storage system.
-    - Returns either a single object or a list of objects with conflicting versions, along with a context.
+    - Returns a single object, along with a context.
 - put:
     - The placement of replicas are determined based on the key.
         - Utilizes MD5 hash to generate a 128-bit identifier from the key.
@@ -44,7 +46,23 @@ At any point, if data discrepancies occur among any participants in the system (
 
 ### CRDTs
 
-First we will start by implementing the [LWW-Element-Set](https://shuvoshaha7.medium.com/lww-element-set-9afff3310819) CRDT. In the future, depending on the project's status, we will consider adapting to the [DeltaCrdt](https://hexdocs.pm/delta_crdt/DeltaCrdt.html), since it doesn't require transmission of its state with every change made, only of its delta. That would be very positive due to the scalability requirements
+First we will start by implementing the [LWW-Element-Set](https://shuvoshaha7.medium.com/lww-element-set-9afff3310819) CRDT. In the future, depending on the project's status, we will consider adapting to the [DeltaCrdt](https://hexdocs.pm/delta_crdt/DeltaCrdt.html), since it doesn't require transmission of its state with every change made, only of its delta. That would be very positive due to the scalability requirements.
+
+
+
+
+
+
+
+
+<div style="page-break-after: always;"></div>
+
+
+
+
+
+
+## Anexes
 
 ### Sistem Design Diagram
 
