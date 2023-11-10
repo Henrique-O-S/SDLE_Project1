@@ -28,7 +28,7 @@ Clients should also be able to access the same shopping list concurrently and it
 
 ### Conflict Handling
 
-At any point, if data discrepancies occur among any participants in the system (either between servers or between clients and servers), a merge process will be initiated. In the event of conflicts, the most recently updated data will take precedence. Conflicts between causally unrelated data are resolved during read operations, ensuring that write operations are never rejected, to protect user experience.
+At any point, if data discrepancies occur among any participants in the system (either between servers or between clients and servers), a merge process will be initiated. In the event of conflicts, the most recently updated data will take precedence. Conflicts between data are resolved by CRDTs during read operations, ensuring that write operations are never rejected, to protect user experience.
 
 ### Methods
 
@@ -44,7 +44,7 @@ At any point, if data discrepancies occur among any participants in the system (
 
 ### CRDTs
 
-Regarding the usage of CRDTs, due to the scalability requirements, we are focused on the [DeltaCrdt](https://hexdocs.pm/delta_crdt/DeltaCrdt.html), since it doesn't require transmission of its state with every change made, only of its delta. That logic will be implemented to the [LWW-Element-Set](https://shuvoshaha7.medium.com/lww-element-set-9afff3310819) CRDT.
+First we will start by implementing the [LWW-Element-Set](https://shuvoshaha7.medium.com/lww-element-set-9afff3310819) CRDT. In the future, depending on the project's status, we will consider adapting to the [DeltaCrdt](https://hexdocs.pm/delta_crdt/DeltaCrdt.html), since it doesn't require transmission of its state with every change made, only of its delta. That would be very positive due to the scalability requirements
 
 ### Sistem Design Diagram
 
