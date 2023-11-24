@@ -1,3 +1,4 @@
 .DS_Store
 src/client/__pycache__/
 src/server/__pycache__/
+crdts/__pycache__/
