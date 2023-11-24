@@ -1,12 +1,25 @@
+import sys
 import zmq
 import sqlite3
 
+def get_port():
+    if len(sys.argv) != 2:
+        print("Usage: python server.py <port>")
+        sys.exit(1)
+
+    return int(sys.argv[1])
+
+def get_database_path(port):
+    return f"databases/shopping_{port}.db"
+
 context = zmq.Context()
 socket = context.socket(zmq.REP)
-socket.bind("tcp://127.0.0.1:5555")
+port = get_port()
+print(port)
+socket.bind(f"tcp://127.0.0.1:{port}")
 
 # Database setup (similar to previous example)
-conn = sqlite3.connect('shopping.db')
+conn = sqlite3.connect(get_database_path(port))
 cursor = conn.cursor()
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS shopping_lists (
