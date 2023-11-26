@@ -19,25 +19,24 @@ while True:
     if frontend_socket in socks and socks[frontend_socket] == zmq.POLLIN:
         # Message from client
         multipart_message = frontend_socket.recv_multipart()
+        print("ROUTER // Raw message from client | ", multipart_message)
 
-        print("Received message from client:", multipart_message)
+        #print("Received message from client:", multipart_message)
 
-        if len(multipart_message) >= 2:
-            client_id, message = multipart_message[1:]
-            print("Message from client:", message)
+        client_id, dummy, message = multipart_message[0:]
+        #print("Message from client:", message)
 
-            # Forward the message to the server
-            backend_socket.send_multipart([b"", message])
+        # Forward the message to the server
+        backend_socket.send_multipart([b"", client_id, message])
 
     if backend_socket in socks and socks[backend_socket] == zmq.POLLIN:
         # Message from server
-        frames = backend_socket.recv_multipart()
+        multipart_message = backend_socket.recv_multipart()
+        print("DEALER // Raw message from server | ", multipart_message)
 
-        # Check if there are at least two frames
-        if len(frames) >= 2:
-            client_identity, response = frames[0], frames[1]
+        client_identity, response = multipart_message[1], multipart_message[2]
 
-            print(f"Received message from server {client_identity}: {response.decode('utf-8')}")
+        #print(f"Message from server {client_identity}: {response.decode('utf-8')}")
 
-            # Forward the message to the client
-            frontend_socket.send_multipart([client_identity, response])
+        # Forward the message to the client
+        frontend_socket.send_multipart([client_identity, b"", response])

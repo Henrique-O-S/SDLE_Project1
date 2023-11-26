@@ -40,20 +40,22 @@ conn.commit()
 conn.close()
 
 while True:
-    message = socket.recv_multipart()
-    print(message)
-    message = json.loads(message[0].decode('utf-8'))
+    multipart_message = socket.recv_multipart()
+    print("REP // Raw message from broker | ", multipart_message)
+    request = json.loads(multipart_message[1].decode('utf-8'))
+    client_id = multipart_message[0]
     
-    if message['action'] == 'create_shopping_list':
-        name = message['name']
+    if request['action'] == 'create_shopping_list':
+        name = request['name']
         conn = sqlite3.connect(get_database_path(port))
         cursor = conn.cursor()
         cursor.execute('INSERT INTO shopping_lists (name) VALUES (?)', (name,))
         conn.commit()
         conn.close()
-        socket.send_json({'message': 'Shopping list created successfully'})
+        response = {'message': 'Shopping list created successfully'}
+        socket.send_multipart([client_id, json.dumps(response).encode('utf-8')])
 
-    elif message['action'] == 'get_shopping_lists':
+    elif request['action'] == 'get_shopping_lists':
         conn = sqlite3.connect(get_database_path(port))
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM shopping_lists')
@@ -61,10 +63,10 @@ while True:
         conn.close()
         socket.send_json(shopping_lists)
 
-    elif message['action'] == 'create_item':
-        name = message['name']
-        quantity = message['quantity']
-        shopping_list_id = message['shopping_list_id']
+    elif request['action'] == 'create_item':
+        name = request['name']
+        quantity = request['quantity']
+        shopping_list_id = request['shopping_list_id']
 
         conn = sqlite3.connect(get_database_path(port))
         cursor = conn.cursor()
@@ -73,8 +75,8 @@ while True:
         conn.close()
         socket.send_json({'message': 'Item created successfully'})
 
-    elif message['action'] == 'get_items':
-        shopping_list_id = message['shopping_list_id']
+    elif request['action'] == 'get_items':
+        shopping_list_id = request['shopping_list_id']
         conn = sqlite3.connect(get_database_path(port))
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM items WHERE shopping_list_id = ?', (shopping_list_id,))
