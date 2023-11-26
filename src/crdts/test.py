@@ -5,8 +5,6 @@ from items_crdt import ItemsCRDT
 logs_1 = []
 logs_2 = []
 
-print("\nInitial Set: {'apple': 3}\n")
-
 t = datetime.now()
 logs_1.append((t, 'update', "apple", 5))
 print("[Client A] Updated apple - 5")

@@ -3,7 +3,6 @@ class ItemsCRDT:
         self.add_set = {}
         self.remove_set = {}
         self.final_set = {}
-
         for actions in logs:
             for action in actions:
                 timestamp, action_type, element, quantity = action
