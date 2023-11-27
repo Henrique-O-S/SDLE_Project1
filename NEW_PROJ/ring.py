@@ -2,6 +2,7 @@ import bisect
 import hashlib
 import numpy as np
 import matplotlib.pyplot as plt
+import uuid
 
 class ConsistentHashRing:
     def __init__(self, servers, virtual_nodes=1):
@@ -59,3 +60,9 @@ class ConsistentHashRing:
             virtual_node = f"{server.name}-virtual-{i}"
             key = self._hash_key(virtual_node)
             bisect.insort(self.ring, (key, server))
+
+    def test_ring(self, iterations):
+        for i in range(iterations):
+            shopping_list_id = str(uuid.uuid4())
+            server = self.get_node(shopping_list_id)
+            print(f"Shopping List {shopping_list_id} assigned to Server {server.name}")
