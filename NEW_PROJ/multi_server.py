@@ -14,7 +14,8 @@ if __name__ == '__main__':
     ring = ConsistentHashRing(servers, num_virtual_nodes)
     print("Creating servers, if line bellow is not commented, need to close graph to continue execution")    
     #ring.plot_ring()
-    ##ring.test_ring(100)
+    # the bellow line is to test the ring, args in number of shopping lists to test hashing :)
+    #ring.test_ring(100)
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.map(run_server, servers)
 
