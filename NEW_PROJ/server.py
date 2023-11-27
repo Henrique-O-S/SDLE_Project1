@@ -4,7 +4,8 @@ import sqlite3
 import json
 
 class Server:
-    def __init__(self, port):
+    def __init__(self, name, port):
+        self.name = name
         self.port = port
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
@@ -38,6 +39,7 @@ class Server:
     def run(self):
         print(f"Server listening on port {self.port}...")
         while True:
+            print("Waiting for message from broker...")
             multipart_message = self.socket.recv_multipart()
             print("REP // Raw message from broker | ", multipart_message)
             request = json.loads(multipart_message[1].decode('utf-8'))
@@ -90,8 +92,3 @@ class Server:
         items = [{'id': row[0], 'name': row[1], 'quantity': row[2]} for row in cursor.fetchall()]
         conn.close()
         self.socket.send_json(items)
-
-if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) == 2 else 6000
-    server = Server(port)
-    server.run()

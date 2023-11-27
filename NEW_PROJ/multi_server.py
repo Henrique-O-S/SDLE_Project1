@@ -1,29 +1,19 @@
-import multiprocessing
-import time
-import subprocess
-import sys
+import concurrent.futures
+import zmq
+from server import Server
+from ring import ConsistentHashRing
 
-def run_server(port):
-    subprocess.run([sys.executable, "server.py", str(port)])
+def run_server(server):
+    server.run()
 
-if __name__ == '__main__':
+if __name__ == '__main__':    
     num_servers = 5  # Change this to the desired number of servers
-
-    processes = []
-
-    for i in range(num_servers):
-        port = 6000 + i  # You can use different ports for each server
-        process = multiprocessing.Process(target=run_server, args=(port,))
-        processes.append(process)
-        process.start()
-
-    try:
-        for process in processes:
-            process.join()
-    except KeyboardInterrupt:
-        print("Terminating servers...")
-        for process in processes:
-            process.terminate()
-            process.join()
+    num_virtual_nodes = 4  # Change this to the desired number of virtual nodes per server
+    servers = [Server(name=f"server_{i}", port=6000 + i) for i in range(num_servers)]
+    ring = ConsistentHashRing(servers, num_virtual_nodes)
+    print("Creating servers, if line bellow is not commented, need to close graph to continue execution")    
+    ring.plot_ring()
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.map(run_server, servers)
 
     print("All servers terminated.")

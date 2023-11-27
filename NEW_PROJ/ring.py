@@ -32,16 +32,30 @@ class ConsistentHashRing:
         return self.ring[index][1]
 
     def plot_ring(self):
-        angles = np.linspace(0, 2 * np.pi, len(self.ring), endpoint=False)
-        points = np.column_stack((np.cos(angles), np.sin(angles)))
+        num_nodes = len(self.ring)
+        radius = 2  # Adjust the radius as needed
 
         fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
-        ax.plot(points[:, 0], points[:, 1], marker='o', linestyle='-', color='b')
+        ax.set_xlim([-radius, radius])
+        ax.set_ylim([-radius, radius])
+
+        circle = plt.Circle((0, 0), radius, edgecolor='b', facecolor='none')
+        ax.add_artist(circle)
 
         for i, (_, server) in enumerate(self.ring):
-            angle = 2 * np.pi * i / len(self.ring)
-            ax.text(np.cos(angle), np.sin(angle), f"{server.name}\n({server.port})", ha='center', va='center', fontweight='bold')
+            angle = 2 * np.pi * i / num_nodes
+            x = radius * np.cos(angle)
+            y = radius * np.sin(angle)
+
+            ax.text(x, y, f"{server.name}\n({server.port})\n({i % self.virtual_nodes})", ha='center', va='center', fontweight='bold')
 
         ax.set_xticks([])
         ax.set_yticks([])
+
         plt.show()
+
+    def add_node(self, server):
+        for i in range(self.virtual_nodes):
+            virtual_node = f"{server.name}-virtual-{i}"
+            key = self._hash_key(virtual_node)
+            bisect.insort(self.ring, (key, server))
