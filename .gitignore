@@ -1,4 +1,5 @@
 .DS_Store
+NEW_PROJ/__pycache__/
 src/client/__pycache__/
 src/server/__pycache__/
 src/crdts/__pycache__/
