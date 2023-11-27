@@ -5,10 +5,14 @@ import matplotlib.pyplot as plt
 import uuid
 
 class ConsistentHashRing:
-    def __init__(self, servers, virtual_nodes=1):
+    def __init__(self, servers, virtual_nodes=1, plot=False, test=False):
         self.servers = servers
         self.virtual_nodes = virtual_nodes
         self.ring = self._build_ring()
+        if plot:
+            self.plot_ring()
+        if test:
+            self.test_ring(100)
 
     def _build_ring(self):
         ring = []
@@ -62,8 +66,14 @@ class ConsistentHashRing:
             bisect.insort(self.ring, (key, server))
 
     def test_ring(self, iterations):
+        print("Testing ring...")
+        assignments_count = {server.name: 0 for server in self.servers}
         for i in range(iterations):
             i+1
             shopping_list_id = str(uuid.uuid4())
             server = self.get_node(shopping_list_id)
-            print(f"Shopping List {shopping_list_id} assigned to Server {server.name}")
+            assignments_count[server.name] += 1
+            #print(f"Shopping List {shopping_list_id} assigned to Server {server.name}")
+        print("Test complete")
+        for server_name, count in assignments_count.items():
+            print(f"Server {server_name} got {count} shopping lists.")

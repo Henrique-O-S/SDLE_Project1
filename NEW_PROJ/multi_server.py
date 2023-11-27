@@ -8,14 +8,13 @@ def run_server(server):
     server.run()
 
 if __name__ == '__main__':    
-    num_servers = 5  # Change this to the desired number of servers
-    num_virtual_nodes = 4  # Change this to the desired number of virtual nodes per server
+    num_servers = 3  # Change this to the desired number of servers
+    num_virtual_nodes = 6  # Change this to the desired number of virtual nodes per server
+
     servers = [Server(name=f"server_{i}", port=6000 + i) for i in range(num_servers)]
-    ring = ConsistentHashRing(servers, num_virtual_nodes)
-    print("Creating servers, if line bellow is not commented, need to close graph to continue execution")    
-    #ring.plot_ring()
-    # the bellow line is to test the ring, args in number of shopping lists to test hashing :)
-    ring.test_ring(500)
+
+    ring = ConsistentHashRing(servers, num_virtual_nodes, plot=True, test=True) #if plot then need to close it to continue running
+
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.map(run_server, servers)
 
