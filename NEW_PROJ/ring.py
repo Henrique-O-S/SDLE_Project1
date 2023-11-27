@@ -63,6 +63,7 @@ class ConsistentHashRing:
 
     def test_ring(self, iterations):
         for i in range(iterations):
+            i+1
             shopping_list_id = str(uuid.uuid4())
             server = self.get_node(shopping_list_id)
             print(f"Shopping List {shopping_list_id} assigned to Server {server.name}")
