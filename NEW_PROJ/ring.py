@@ -5,9 +5,10 @@ import matplotlib.pyplot as plt
 import uuid
 
 class ConsistentHashRing:
-    def __init__(self, servers, virtual_nodes=1, plot=False, test=False):
+    def __init__(self, servers, virtual_nodes=1, plot=False, test=False, hashing_option=0):
         self.servers = servers
         self.virtual_nodes = virtual_nodes
+        self.hashing_option = hashing_option
         self.ring = self._build_ring()
         if plot:
             self.plot_ring()
@@ -26,7 +27,12 @@ class ConsistentHashRing:
         return ring
 
     def _hash_key(self, key):
-        return int(hashlib.md5(key.encode()).hexdigest(), 16)
+        if self.hashing_option == 0:
+            return int(hashlib.md5(key.encode()).hexdigest(), 16)
+        elif self.hashing_option == 1:
+            return int(hashlib.sha256(key.encode()).hexdigest(), 16)
+        elif self.hashing_option == 2:
+            return int(hashlib.sha512(key.encode()).hexdigest(), 16)
 
     def get_node(self, key):
         if not self.ring:
