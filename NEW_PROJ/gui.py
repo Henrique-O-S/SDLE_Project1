@@ -1,6 +1,8 @@
 # --------------------------------------------------------------
 
 import tkinter as tk
+import uuid
+from db import ShoppingListDB
 
 # --------------------------------------------------------------
 
@@ -8,44 +10,7 @@ class ArmazonGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("ARMAZON")
-        self.shopping_lists = [
-            {
-                "id": 0,
-                "name": "Groceries",
-                "items": [
-                    {
-                        "name": "Apples",
-                        "quantity": 3
-                    },
-                    {
-                        "name": "Milk",
-                        "quantity": 2
-                    },
-                    {
-                        "name": "Bread",
-                        "quantity": 1
-                    }
-                ]
-            },
-            {
-                "id": 1,
-                "name": "Electronics",
-                "items": [
-                    {
-                        "name": "Laptop",
-                        "quantity": 4
-                    },
-                    {
-                        "name": "Phone",
-                        "quantity": 2
-                    },
-                    {
-                        "name": "Headphones",
-                        "quantity": 3
-                    }
-                ]
-            }
-        ]
+        self.database = ShoppingListDB()
         self.build()
 
     def clear(self):
@@ -81,7 +46,7 @@ class ArmazonGUI:
     def home(self):
         self.clear()
         label = tk.Label(self.content_frame, text="Home Page", font=("Arial", 14, "bold"))
-        label.grid(row=0, column=0, columnspan=3)
+        label.grid(row=0, column=0, columnspan=4)
         self.create_list_input()
         self.view_list_input()
 
@@ -91,13 +56,13 @@ class ArmazonGUI:
         self.new_list_entry = tk.Entry(self.content_frame)
         self.new_list_entry.grid(row=1, column=1)
         add_list_button = tk.Button(self.content_frame, text="Add List", bg="#3dd142", command=self.add_shopping_list)
-        add_list_button.grid(row=1, column=2)
+        add_list_button.grid(row=1, column=3)
 
     def add_shopping_list(self):
         new_list_name = self.new_list_entry.get()
         if new_list_name:
-            new_list_id = len(self.shopping_lists)
-            self.shopping_lists.append({"id": new_list_id, "name": new_list_name, "items": []})
+            new_list_id = str(uuid.uuid4())
+            self.database.add_shopping_list(new_list_id, new_list_name)
             self.new_list_entry.delete(0, tk.END)
             self.admin()
 
@@ -106,11 +71,17 @@ class ArmazonGUI:
         view_list_label.grid(row=2, column=0)
         self.view_list_entry = tk.Entry(self.content_frame)
         self.view_list_entry.grid(row=2, column=1)
+        paste_button = tk.Button(self.content_frame, text="📋", command=self.paste_content)
+        paste_button.grid(row=2, column=2)
         view_list_button = tk.Button(self.content_frame, text="View List", bg="#3dd142", command=self.get_view_list_entry)
-        view_list_button.grid(row=2, column=2)
+        view_list_button.grid(row=2, column=3)
+
+    def paste_content(self):
+        content = self.content_frame.clipboard_get()
+        self.view_list_entry.insert(tk.END, content)
 
     def get_view_list_entry(self):
-        list_id = int(self.view_list_entry.get())
+        list_id = self.view_list_entry.get()
         self.shopping_list(list_id)
 
 # --------------------------------------------------------------
@@ -118,13 +89,14 @@ class ArmazonGUI:
     def admin(self):
         self.clear()
         label = tk.Label(self.content_frame, text="Admin Page", font=("Arial", 14, "bold"))
-        label.grid(row=0, column=0, columnspan=2)
+        label.grid(row=0, column=0, columnspan=3)
         self.lists()
 
     def lists(self):
         row = 1
-        if self.shopping_lists:
-            for shopping_list in self.shopping_lists:
+        shopping_lists = self.database.get_shopping_lists()
+        if shopping_lists:
+            for shopping_list in shopping_lists:
                 self.shopping_list_item(shopping_list, row)
                 row += 1
         else:
@@ -132,36 +104,35 @@ class ArmazonGUI:
             empty_label.grid(row=row, column=0)
 
     def shopping_list_item(self, shopping_list, row):
-        id = shopping_list["id"]
-        list_button = tk.Button(self.content_frame, text=f"[{id}] {shopping_list['name']}", command=lambda: self.shopping_list(shopping_list['id']))
+        id = shopping_list[0]
+        name = shopping_list[1]
+        list_button = tk.Button(self.content_frame, text=f"{name}", command=lambda: self.shopping_list(id))
         list_button.grid(row=row, column=0)
-        self.delete_list_button(shopping_list['id'], row)
+        copy_button = tk.Button(self.content_frame, text="📋", command=lambda: self.copy_content(shopping_list[0]))
+        copy_button.grid(row=row, column=1)
+        self.delete_list_button(id, row, 2)
+
+    def copy_content(self, content):
+        self.content_frame.clipboard_clear()
+        self.content_frame.clipboard_append(content)
 
     def delete_list_button(self, id, row, col = 1, span = 1):
         delete_button = tk.Button(self.content_frame, text="Delete List", bg="#cc2f2f", fg="white", command=lambda: self.delete_list(id))
         delete_button.grid(row=row, column=col, columnspan=span)
 
     def delete_list(self, id):
-        for i in range(len(self.shopping_lists)):
-            if self.shopping_lists[i]['id'] == id:
-                del self.shopping_lists[i]
-                break
+        self.database.delete_shopping_list(id)
         self.admin()
 
 # --------------------------------------------------------------
 
     def get_list(self, id):
-        for shopping_list in self.shopping_lists:
-            if shopping_list.get("id") == id:
-                return shopping_list
-        return None
+        shopping_list = self.database.get_shopping_list(id)
+        return shopping_list
     
     def get_item(self, list_id, item_name):
-        shopping_list = self.get_list(list_id)
-        for item in shopping_list['items']:
-            if item.get("name") == item_name:
-                return item
-        return None
+        item = self.database.get_item(list_id, item_name)
+        return item
 
 # --------------------------------------------------------------
 
@@ -169,10 +140,14 @@ class ArmazonGUI:
         if self.get_list(list_id):
             shopping_list = self.get_list(list_id)
             self.clear()
-            label = tk.Label(self.content_frame, text=f"Shopping List: {shopping_list['name']}", font=("Arial", 14, "bold"))
+            label = tk.Label(self.content_frame, text=f"{shopping_list[1]}", font=("Arial", 14, "bold"))
             label.grid(row=0, column=0, columnspan=4)
-            self.delete_list_button(shopping_list['id'], 1, 0, 4)
-            row = 3
+            id_label = tk.Label(self.content_frame, text=f"[{shopping_list[0]}]", font=("Arial", 12, "bold"))
+            id_label.grid(row=1, column=0, columnspan=4)
+            copy_button = tk.Button(self.content_frame, text="📋 Copy ID", command=lambda: self.copy_content(shopping_list[0]))
+            copy_button.grid(row=2, columnspan=4)
+            self.delete_list_button(shopping_list[0], 3, 0, 4)
+            row = 5
             row = self.items(shopping_list, row)
             self.add_item_input(shopping_list, row)
         else:
@@ -182,8 +157,9 @@ class ArmazonGUI:
     
     def items(self, shopping_list, row):
         self.item_entries = {}
-        if (len(shopping_list['items']) > 0):
-            for item in shopping_list['items']:
+        items = self.database.get_items(shopping_list[0])
+        if (len(items) > 0):
+            for item in items:
                 self.item(shopping_list, item, row)
                 row += 1
         else:
@@ -193,26 +169,26 @@ class ArmazonGUI:
         return row
 
     def item(self, shopping_list, item, row):
-        item_label = tk.Label(self.content_frame, text=f"{item['name']}")
+        item_label = tk.Label(self.content_frame, text=f"{item[0]}")
         item_label.grid(row=row, column=0)
         self.update_item_input(shopping_list, item, row)
         self.delete_item_button(shopping_list, item, row)
 
     def update_item_input(self, shopping_list, item, row):
-        self.item_entries[item['name']] = tk.Entry(self.content_frame) 
-        self.item_entries[item['name']].grid(row=row, column=1)
-        self.item_entries[item['name']].insert(0, str(int(item['quantity'])))
+        name = item[0]
+        quantity = item[1]
+        self.item_entries[name] = tk.Entry(self.content_frame) 
+        self.item_entries[name].grid(row=row, column=1)
+        self.item_entries[name].insert(0, str(int(quantity)))
         modify_item_button = tk.Button(self.content_frame, text="Update Quantity", bg="#3dd142", command=lambda: self.update_item(shopping_list, item, row))
         modify_item_button.grid(row=row, column=2)
 
     def update_item(self, shopping_list, item, row):
-        quantity_value = self.item_entries[item['name']].get()  
+        name = item[0]
+        quantity_value = self.item_entries[name].get()  
         if quantity_value.isdigit() and int(quantity_value) >= 0:
-            for i in range(len(shopping_list['items'])):
-                if shopping_list['items'][i]['name'] == item['name']:
-                    shopping_list['items'][i]['quantity'] = int(quantity_value)
-                    self.shopping_list(shopping_list['id'])
-                    break
+            self.database.update_item(name, int(quantity_value))
+            self.shopping_list(shopping_list[0])
         else:
             error_label = tk.Label(self.content_frame, text="Please enter a valid quantity")
             error_label.grid(row=row+1, column=0, columnspan=2)
@@ -223,11 +199,8 @@ class ArmazonGUI:
         delete_button.grid(row=row, column=3)
 
     def delete_item(self, shopping_list, item):
-        for i in range(len(shopping_list['items'])):
-            if shopping_list['items'][i]['name'] == item['name']:
-                del shopping_list['items'][i]
-                self.shopping_list(shopping_list['id'])
-                break
+        self.database.delete_item(item[0])
+        self.shopping_list(shopping_list[0])
     
     def add_item_input(self, shopping_list, row):
         label = tk.Label(self.content_frame, text="Add Item:", font=("Arial", 10, "bold"))
@@ -250,11 +223,13 @@ class ArmazonGUI:
         new_item_name = self.new_item_name_entry.get()
         new_item_quantity = self.new_item_quantity_entry.get()
         if new_item_name and new_item_quantity.isdigit() and int(new_item_quantity) >= 0:
-            for i in range(len(self.shopping_lists)):
-                if self.shopping_lists[i]['id'] == shopping_list['id']:
-                    self.shopping_lists[i]['items'].append({"name": new_item_name, "quantity": int(new_item_quantity)})
-                    self.shopping_list(shopping_list['id'])
-                    break
+            new_item = self.database.add_item(new_item_name, int(new_item_quantity), shopping_list[0])
+            if (new_item):
+                self.shopping_list(shopping_list[0])
+            else:
+                error_label = tk.Label(self.content_frame, text="This item already exists.")
+                error_label.grid(row=row+1, column=1, columnspan=3)
+                self.root.after(1000, error_label.destroy)
         else:
             error_label = tk.Label(self.content_frame, text="Please enter a valid item name and quantity")
             error_label.grid(row=row+1, column=1, columnspan=3)
@@ -262,8 +237,15 @@ class ArmazonGUI:
 
 # --------------------------------------------------------------
 
+    def on_closing(self):
+        self.database.close_connection()
+        root.destroy() 
+
+# --------------------------------------------------------------
+
 root = tk.Tk()
 app = ArmazonGUI(root)
+root.protocol("WM_DELETE_WINDOW", app.on_closing)
 root.mainloop()
 
 # --------------------------------------------------------------
