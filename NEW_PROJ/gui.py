@@ -88,12 +88,14 @@ class ArmazonGUI:
 
     def admin(self):
         self.clear()
+        refresh_button = tk.Button(self.content_frame, text="🔄", font=("Arial", 12), command=lambda: self.admin)
+        refresh_button.grid(row=0, column=0, columnspan=3)
         label = tk.Label(self.content_frame, text="Admin Page", font=("Arial", 14, "bold"))
-        label.grid(row=0, column=0, columnspan=3)
+        label.grid(row=1, column=0, columnspan=3)
         self.lists()
 
     def lists(self):
-        row = 1
+        row = 2
         shopping_lists = self.database.get_shopping_lists()
         if shopping_lists:
             for shopping_list in shopping_lists:
@@ -115,6 +117,7 @@ class ArmazonGUI:
     def copy_content(self, content):
         self.content_frame.clipboard_clear()
         self.content_frame.clipboard_append(content)
+        print("Copied to clipboard: " + content)
 
     def delete_list_button(self, id, row, col = 1, span = 1):
         delete_button = tk.Button(self.content_frame, text="Delete List", bg="#cc2f2f", fg="white", command=lambda: self.delete_list(id))
@@ -140,14 +143,16 @@ class ArmazonGUI:
         if self.get_list(list_id):
             shopping_list = self.get_list(list_id)
             self.clear()
+            refresh_button = tk.Button(self.content_frame, text="🔄", font=("Arial", 12), command=lambda: self.shopping_list(shopping_list[0]))
+            refresh_button.grid(row=0, column=0, columnspan=4)
             label = tk.Label(self.content_frame, text=f"{shopping_list[1]}", font=("Arial", 14, "bold"))
-            label.grid(row=0, column=0, columnspan=4)
+            label.grid(row=1, column=0, columnspan=4)
             id_label = tk.Label(self.content_frame, text=f"[{shopping_list[0]}]", font=("Arial", 12, "bold"))
-            id_label.grid(row=1, column=0, columnspan=4)
+            id_label.grid(row=2, column=0, columnspan=4)
             copy_button = tk.Button(self.content_frame, text="📋 Copy ID", command=lambda: self.copy_content(shopping_list[0]))
-            copy_button.grid(row=2, columnspan=4)
-            self.delete_list_button(shopping_list[0], 3, 0, 4)
-            row = 5
+            copy_button.grid(row=3, columnspan=4)
+            self.delete_list_button(shopping_list[0], 4, 0, 4)
+            row = 6
             row = self.items(shopping_list, row)
             self.add_item_input(shopping_list, row)
         else:
@@ -164,7 +169,7 @@ class ArmazonGUI:
                 row += 1
         else:
             empty_label = tk.Label(self.content_frame, text="No items available.")
-            empty_label.grid(row=row, column=0, columnspan=3)
+            empty_label.grid(row=row, column=0, columnspan=4)
             row += 1
         return row
 
