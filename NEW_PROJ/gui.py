@@ -10,7 +10,7 @@ class ArmazonGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("ARMAZON")
-        self.database = ShoppingListDB()
+        self.database = ShoppingListDB('gui.db')
         self.build()
 
     def clear(self):

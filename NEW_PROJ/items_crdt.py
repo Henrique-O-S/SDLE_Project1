@@ -1,22 +1,3 @@
-# -----------------------------------------------------------------------------
-
-class ListsCRDT:
-    def __init__(self):
-        self.add_set = set()
-        self.remove_set = set()
-
-    def add(self, shopping_list):
-        self.add_set.add(shopping_list)
-
-    def remove(self, shopping_list):
-        if shopping_list in self.add_set:
-            self.remove_set.add(shopping_list)
-
-    def lookup(self):
-        return self.add_set - self.remove_set
-    
-# -----------------------------------------------------------------------------
-
 class ItemsCRDT:
     def __init__(self, logs):
         self.add_set = {}
@@ -63,4 +44,3 @@ class ItemsCRDT:
                 final_set[element] = data['quantity']
         return final_set
     
-# -----------------------------------------------------------------------------
