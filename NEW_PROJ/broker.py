@@ -1,5 +1,7 @@
 import zmq
 
+from multi_server import MultiServer
+
 context = zmq.Context()
 frontend_socket = context.socket(zmq.ROUTER)
 backend_socket = context.socket(zmq.DEALER)
@@ -12,6 +14,9 @@ poller.register(backend_socket, zmq.POLLIN)
 
 target_server_address = "tcp://127.0.0.1:6001"
 backend_socket.connect(target_server_address) 
+
+ring = MultiServer.ring
+
 
 while True:
     socks = dict(poller.poll())
