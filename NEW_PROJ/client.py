@@ -1,3 +1,4 @@
+import uuid
 import zmq
 import json
 context = zmq.Context()
@@ -10,8 +11,7 @@ socket.setsockopt(zmq.IDENTITY, client_identity)
 socket.connect("tcp://127.0.0.1:5559")
 
 # Example: Creating a shopping list
-message = {'action': 'create_shopping_list', 
-           'name': 'MyShoppingList'}
+message = {'action': 'create_shopping_list', 'id': str(uuid.uuid4()), 'name': 'MyShoppingList'}
 socket.send_multipart([json.dumps(message).encode('utf-8')])
 multipart_message = socket.recv_multipart()
 print("REQ // Raw message from broker | ", multipart_message)

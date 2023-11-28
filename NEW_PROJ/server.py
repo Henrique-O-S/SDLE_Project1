@@ -9,7 +9,7 @@ class Server:
         self.port = port
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
-        self.socket.bind(f"tcp://127.0.0.1:{self.port}")
+        self.address = f"tcp://127.0.0.1:{self.port}"
         self.setup_database()
 
     def setup_database(self):
@@ -37,10 +37,12 @@ class Server:
         return f"databases/shopping_{self.port}.db"
 
     def run(self):
+        self.socket.bind(self.address)
         print(f"Server listening on port {self.port}...")
         while True:
             print("Waiting for message from broker...")
             multipart_message = self.socket.recv_multipart()
+            print("SERVER RECEIVED MESSAGE", self.address)
             print("REP // Raw message from broker | ", multipart_message)
             request = json.loads(multipart_message[1].decode('utf-8'))
             client_id = multipart_message[0]
