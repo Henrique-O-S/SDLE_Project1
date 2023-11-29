@@ -17,7 +17,7 @@ from gui import ArmazonGUI
 class Client:
     def __init__(self, name = 'client'):
         self.name = name
-        self.database = ArmazonDB("../client/database/" + self.name)
+        self.database = ArmazonDB("../client/databases/" + self.name)
         self.lists_crdt = ListsCRDT()
         self.items_crdt = {}
         self.gui = ArmazonGUI(self)

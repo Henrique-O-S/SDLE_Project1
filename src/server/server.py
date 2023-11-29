@@ -2,6 +2,8 @@ import sys
 import zmq
 import sqlite3
 import json
+sys.path.append('..')
+from db import ArmazonDB
 
 class Server:
     def __init__(self, name, port):
@@ -10,28 +12,7 @@ class Server:
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
         self.address = f"tcp://127.0.0.1:{self.port}"
-        self.setup_database()
-
-    def setup_database(self):
-        conn = sqlite3.connect(self.get_database_path())
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS shopping_lists (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL
-            )
-        ''')
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS items (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                quantity INTEGER NOT NULL,
-                shopping_list_id INTEGER,
-                FOREIGN KEY (shopping_list_id) REFERENCES shopping_lists (id)
-            )
-        ''')
-        conn.commit()
-        conn.close()
+        self.database = ArmazonDB("../server/databases/" + self.name)
 
     def get_database_path(self):
         return f"databases/shopping_{self.port}.db"
