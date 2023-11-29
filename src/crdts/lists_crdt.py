@@ -13,6 +13,10 @@ class ListsCRDT:
         self.add_set = self.add_set.union(other_set.add_set)
         self.remove_set = self.remove_set.union(other_set.remove_set)
 
+    def removal_merge(self, other_set):
+        self.remove_set = self.remove_set.union(other_set.remove_set)
+        self.remove_set = self.remove_set.intersection(self.add_set)
+
     def value(self):
         return self.add_set - self.remove_set
     

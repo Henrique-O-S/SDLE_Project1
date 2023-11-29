@@ -1,4 +1,5 @@
 # --------------------------------------------------------------
+
 import sys
 sys.path.append('..')
 sys.path.append('../crdts')
@@ -11,17 +12,28 @@ from items_crdt import ItemsCRDT
 from lists_crdt import ListsCRDT
 from gui import ArmazonGUI
 
-
 # --------------------------------------------------------------
 
 class Client:
     def __init__(self, name = 'client'):
         self.name = name
         self.database = ArmazonDB("../client/databases/" + self.name)
-        self.lists_crdt = ListsCRDT()
-        self.items_crdt = {}
+        self.load_crdts()
         self.connect(5559)
         self.gui = ArmazonGUI(self)
+
+# --------------------------------------------------------------
+
+    def load_crdts(self):
+        self.lists_crdt = ListsCRDT()
+        self.items_crdt = {}
+        shopping_lists = self.database.get_shopping_lists()
+        for shopping_list in shopping_lists:
+            self.lists_crdt.add((shopping_list[0], shopping_list[1]))
+            # to do: load items crdt
+        removed_lists = self.database.get_removed_lists()
+        for removed_list in removed_lists:
+            self.lists_crdt.remove((removed_list[0], removed_list[1]))
 
 # --------------------------------------------------------------
 
@@ -35,8 +47,25 @@ class Client:
         self.socket.send_multipart([json.dumps(message).encode('utf-8')])
         multipart_message = self.socket.recv_multipart()
         return json.loads(multipart_message[0].decode('utf-8'))
-    
+
 # --------------------------------------------------------------
+
+    def get_shopping_list(self, id):
+        shopping_list = self.database.get_shopping_list(id)
+        if shopping_list == None:
+            data = self.server_shopping_list(id)
+            if data['status'] == 'OK':
+                self.database.add_shopping_list(data['id'], data['name'])
+                for item in data['items']:
+                    self.database.add_item(item['name'], item['quantity'], data['id'])
+        return shopping_list
+    
+    def server_shopping_list(self, id):
+        message = {'action': 'get_shopping_list', 'id': id}
+        self.socket.send_multipart([json.dumps(message).encode('utf-8')])
+        multipart_message = self.socket.recv_multipart()
+        response = json.loads(multipart_message[0].decode('utf-8'))
+        return response
 
     def add_shopping_list(self, name):
         id = str(uuid.uuid4())
@@ -79,29 +108,21 @@ class Client:
 
     def refresh_shopping_lists(self):
         server_lists_crdt = self.server_lists_crdt()
-        self.lists_crdt.merge(server_lists_crdt)
+        self.lists_crdt.removal_merge(server_lists_crdt)
         self.update_db_lists()
 
     def server_lists_crdt(self):
         server_lists_crdt = ListsCRDT()
-
         message = {'action': 'update_shopping_lists_crdt', 'crdt': self.lists_crdt.to_json()}
         self.socket.send_multipart([json.dumps(message).encode('utf-8')])
         multipart_message = self.socket.recv_multipart()
         print("REQ // Raw message from broker | ", multipart_message)
-        response_data = json.loads(multipart_message[0].decode('utf-8'))
-        print(response_data)
-        print(response_data['message'])
-
-
-
+        response = json.loads(multipart_message[0].decode('utf-8'))
+        print(response)
+        print(response['message'])
         return server_lists_crdt
     
     def update_db_lists(self):
-        for element in self.lists_crdt.add_set:
-            shopping_list = self.database.get_shopping_list(element[0])
-            if shopping_list == None:
-                self.database.add_shopping_list(element[0], element[1])
         for element in self.lists_crdt.remove_set:
             self.database.delete_shopping_list(element[0])
 

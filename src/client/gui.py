@@ -21,7 +21,7 @@ class ArmazonGUI:
         self.header()
         self.refresh_button()
         self.home_button()
-        self.admin_button()
+        self.shopping_lists_button()
         self.content_frame = tk.Frame(self.root)
         self.content_frame.pack(padx=100, pady=10)
         for i in range(0, 100):
@@ -39,65 +39,61 @@ class ArmazonGUI:
         self.refresh_btn.pack(pady=5)
 
     def home_button(self):
-        self.home_btn = tk.Button(self.root, text="Home Page", font=("Arial", 10), bg="#3498db", fg="white", command=self.home)
+        self.home_btn = tk.Button(self.root, text="Home", font=("Arial", 10), bg="#3498db", fg="white", command=self.home)
         self.home_btn.pack(pady=5)
 
-    def admin_button(self):	
-        self.admin_btn = tk.Button(self.root, text="Admin Page", font=("Arial", 10), bg="#3498db", fg="white", command=self.admin)
-        self.admin_btn.pack(pady=5)
+    def shopping_lists_button(self):	
+        self.shopping_lists_btn = tk.Button(self.root, text="My Shopping Lists", font=("Arial", 10), bg="#3498db", fg="white", command=self.shopping_lists)
+        self.shopping_lists_btn.pack(pady=5)
 
 # --------------------------------------------------------------
 
     def home(self):
         self.clear()
-        label = tk.Label(self.content_frame, text="Home Page", font=("Arial", 14, "bold"))
-        label.grid(row=0, column=0, columnspan=4)
         self.create_list_input()
-        self.view_list_input()
+        self.access_list_input()
 
     def create_list_input(self):
         new_list_label = tk.Label(self.content_frame, text="Create New Shopping List:")
-        new_list_label.grid(row=1, column=0)
+        new_list_label.grid(row=0, column=0)
         self.new_list_entry = tk.Entry(self.content_frame)
-        self.new_list_entry.grid(row=1, column=1)
+        self.new_list_entry.grid(row=0, column=1)
         add_list_button = tk.Button(self.content_frame, text="Add List", bg="#3dd142", command=self.add_shopping_list)
-        add_list_button.grid(row=1, column=3)
+        add_list_button.grid(row=0, column=3)
 
     def add_shopping_list(self):
         new_list_name = self.new_list_entry.get()
         if new_list_name:
             self.client.add_shopping_list(new_list_name)
             self.new_list_entry.delete(0, tk.END)
-            self.admin()
+            self.shopping_lists()
 
-    def view_list_input(self):
-        view_list_label = tk.Label(self.content_frame, text="View Shopping List:")
-        view_list_label.grid(row=2, column=0)
-        self.view_list_entry = tk.Entry(self.content_frame)
-        self.view_list_entry.grid(row=2, column=1)
+    def access_list_input(self):
+        access_list_label = tk.Label(self.content_frame, text="Access Shopping List:")
+        access_list_label.grid(row=1, column=0)
+        self.access_list_entry = tk.Entry(self.content_frame)
+        self.access_list_entry.grid(row=1, column=1)
         paste_button = tk.Button(self.content_frame, text="📋", command=self.paste_content)
-        paste_button.grid(row=2, column=2)
-        view_list_button = tk.Button(self.content_frame, text="View List", bg="#3dd142", command=self.get_view_list_entry)
-        view_list_button.grid(row=2, column=3)
+        paste_button.grid(row=1, column=2)
+        access_list_button = tk.Button(self.content_frame, text="Search List", bg="#3dd142", command=self.get_access_list_entry)
+        access_list_button.grid(row=1, column=3)
 
     def paste_content(self):
         content = self.content_frame.clipboard_get()
-        self.view_list_entry.insert(tk.END, content)
+        self.access_list_entry.insert(tk.END, content)
 
-    def get_view_list_entry(self):
-        list_id = self.view_list_entry.get()
+    def get_access_list_entry(self):
+        list_id = self.access_list_entry.get()
         self.shopping_list(list_id)
 
 # --------------------------------------------------------------
 
-    def admin(self):
+    def shopping_lists(self):
         self.clear()
-        label = tk.Label(self.content_frame, text="Admin Page", font=("Arial", 14, "bold"))
-        label.grid(row=0, column=0, columnspan=3)
         self.lists()
 
     def lists(self):
-        row = 1
+        row = 0
         shopping_lists = self.client.database.get_shopping_lists()
         if shopping_lists:
             for shopping_list in shopping_lists:
@@ -126,15 +122,15 @@ class ArmazonGUI:
         delete_button.grid(row=row, column=col, columnspan=span)
 
     def delete_list(self, id):
-        shopping_list = self.client.database.get_shopping_list(id)
+        shopping_list = self.client.get_shopping_list(id)
         name = shopping_list[1]
         self.client.delete_shopping_list(id, name)
-        self.admin()
+        self.shopping_lists()
 
 # --------------------------------------------------------------
 
     def get_list(self, id):
-        shopping_list = self.client.database.get_shopping_list(id)
+        shopping_list = self.client.get_shopping_list(id)
         return shopping_list
     
     def get_item(self, list_id, item_name):
