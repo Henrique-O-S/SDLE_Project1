@@ -4,10 +4,10 @@ from ring import ConsistentHashRing
 
 class MultiServer:
     NUM_SERVERS = 5
-    NUM_VIRTUAL_NODES = 3
+    NUM_VIRTUAL_NODES = 20
 
     servers = [Server(name=f"server_{i}", port=6000 + i) for i in range(NUM_SERVERS)]
-    ring = ConsistentHashRing(servers, NUM_VIRTUAL_NODES, hashing_option=2)
+    ring = ConsistentHashRing(servers, NUM_VIRTUAL_NODES, plot=False, test= True, hashing_option=2)
 
     @staticmethod
     def run_server(server):

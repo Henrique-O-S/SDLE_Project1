@@ -1,5 +1,5 @@
 import zmq
-from multi_server import MultiServer
+from server.multi_server import MultiServer
 
 class Broker:
     def __init__(self, frontend_port=5559, backend_port=5560):
