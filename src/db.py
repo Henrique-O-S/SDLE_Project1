@@ -1,9 +1,8 @@
 import sqlite3
-from datetime import datetime
 
-class ShoppingListDB:
-    def __init__(self, db_name):
-        self.conn = sqlite3.connect(db_name)
+class ArmazonDB:
+    def __init__(self, name):
+        self.conn = sqlite3.connect(name + '.db')
         self.cursor = self.conn.cursor()
         self.create_tables()
 
@@ -12,16 +11,15 @@ class ShoppingListDB:
             CREATE TABLE IF NOT EXISTS shopping_lists (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
-                removed BOOLEAN DEFAULT 0,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                removed BOOLEAN DEFAULT 0
             )
         ''')
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS items (
-                name TEXT PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
                 quantity INTEGER NOT NULL,
                 shopping_list_id TEXT NOT NULL,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (shopping_list_id) REFERENCES shopping_lists (id)
             )
         ''')
@@ -67,23 +65,22 @@ class ShoppingListDB:
         self.cursor.execute('UPDATE shopping_lists SET removed = ? WHERE id = ?', (1, shopping_list_id))
         self.conn.commit()
 
-    def delete_item(self, item_name):
-        self.cursor.execute('DELETE FROM items WHERE name = ?', (item_name,))
+    def delete_item(self, item_name, shopping_list_id):
+        self.cursor.execute('DELETE FROM items WHERE name = ? AND shopping_list_id = ?', (item_name, shopping_list_id))
         self.conn.commit()
 
-    def update_item(self, item_name, new_quantity):
-        self.cursor.execute('UPDATE items SET quantity = ? WHERE name = ?', (new_quantity, item_name))
-        self.update_item_timestamp(item_name)
+    def update_item(self, item_name, new_quantity, shopping_list_id):
+        self.cursor.execute('UPDATE items SET quantity = ? WHERE name = ? AND shopping_list_id = ?',
+                            (new_quantity, item_name, shopping_list_id))
         self.conn.commit()
 
-    def update_item_timestamp(self, item_name):
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.cursor.execute(f'UPDATE items SET timestamp = ? WHERE name = ?', (timestamp, item_name))
-        self.conn.commit()
-
-    def clear_data(self):
+    def clear_shopping_lists(self):
         self.cursor.execute('DELETE FROM shopping_lists')
         self.cursor.execute('DELETE FROM items')
+        self.conn.commit()
+
+    def clear_list_items(self, shopping_list_id):
+        self.cursor.execute('DELETE FROM items WHERE shopping_list_id = ?', (shopping_list_id,))
         self.conn.commit()
 
     def close_connection(self):
