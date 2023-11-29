@@ -15,3 +15,16 @@ class ListsCRDT:
 
     def value(self):
         return self.add_set - self.remove_set
+    
+    def to_json(self):
+            return {
+                'add_set': list(self.add_set),
+                'remove_set': list(self.remove_set)
+            }
+
+    @classmethod
+    def from_json(cls, json_data):
+        crdt = cls()
+        crdt.add_set = set(json_data['add_set'])
+        crdt.remove_set = set(json_data['remove_set'])
+        return crdt

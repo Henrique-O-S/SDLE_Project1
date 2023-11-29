@@ -20,15 +20,16 @@ class Client:
         self.database = ArmazonDB("../client/databases/" + self.name)
         self.lists_crdt = ListsCRDT()
         self.items_crdt = {}
+        self.connect(5559)
         self.gui = ArmazonGUI(self)
 
 # --------------------------------------------------------------
 
-    def connect(self, address):
+    def connect(self, port):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
         self.socket.setsockopt(zmq.IDENTITY, str(self.name).encode('utf-8'))
-        self.socket.connect(address)
+        self.socket.connect(f"tcp://127.0.0.1:{port}")
 
     def send_request(self, message):
         self.socket.send_multipart([json.dumps(message).encode('utf-8')])
@@ -42,19 +43,11 @@ class Client:
         shopping_list = self.database.add_shopping_list(id, name)
         self.lists_crdt.add((id, name))
         self.items_crdt[id] = ItemsCRDT()
-        #message = {'type': 'add_list', 'id': id, 'name': name}
-        #response = self.send_request(message)
-        #if response['status'] == 'OK':
-        #    print('Server response: OK')
         return shopping_list
 
     def delete_shopping_list(self, id, name):
         self.database.delete_shopping_list(id)
         self.lists_crdt.remove((id, name))
-        #message = {'type': 'remove_list', 'id': id}
-        #response = self.send_request(message)
-        #if response['status'] == 'OK':
-        #    print('Server response: OK')
 
 # --------------------------------------------------------------
 
@@ -62,29 +55,18 @@ class Client:
         item = self.database.add_item(name, quantity, shopping_list_id)
         timestamp = datetime.now().timestamp()
         self.items_crdt[shopping_list_id].add((name, quantity), timestamp)
-        #message = {'type': 'add_item', 'name': name, 'quantity': quantity, 'timestamp': timestamp}
-        #response = self.send_request(message)
-        #if response['status'] == 'OK':
-        #    print('Server response: OK')
         return item
 
     def update_item(self, shopping_list_id, name, quantity):
         self.database.update_item(name, quantity, shopping_list_id)
         timestamp = datetime.now().timestamp()
         self.items_crdt[shopping_list_id].add((name, quantity), timestamp)
-        #message = {'type': 'update_item', 'name': name, 'quantity': quantity, 'timestamp': timestamp}
-        #response = self.send_request(message)
-        #if response['status'] == 'OK':
-        #    print('Server response: OK')
+
 
     def delete_item(self, shopping_list_id, name, quantity):
         self.database.delete_item(name, shopping_list_id)
         timestamp = datetime.now().timestamp()
         self.items_crdt[shopping_list_id].remove((name, quantity), timestamp)
-        #message = {'type': 'remove_item', 'name': name, 'quantity': quantity, 'timestamp': timestamp}
-        #response = self.send_request(message)
-        #if response['status'] == 'OK':
-        #    print('Server response: OK')
 
 # --------------------------------------------------------------
 
@@ -102,14 +84,17 @@ class Client:
 
     def server_lists_crdt(self):
         server_lists_crdt = ListsCRDT()
-        #response = self.send_request({'type': 'refresh_lists'})
-        #if response['status'] == 'OK':
-        #    print('Server response: OK')
-        #    for shopping_list in response['actions']:
-        #        if shopping_list['type'] == 'add_list':
-        #            server_lists_crdt.add((shopping_list['id'], shopping_list['name']))
-        #        elif shopping_list['type'] == 'remove_list':
-        #            server_lists_crdt.remove((shopping_list['id'], shopping_list['name']))
+
+        message = {'action': 'update_shopping_lists_crdt', 'crdt': self.lists_crdt.to_json()}
+        self.socket.send_multipart([json.dumps(message).encode('utf-8')])
+        multipart_message = self.socket.recv_multipart()
+        print("REQ // Raw message from broker | ", multipart_message)
+        response_data = json.loads(multipart_message[0].decode('utf-8'))
+        print(response_data)
+        print(response_data['message'])
+
+
+
         return server_lists_crdt
     
     def update_db_lists(self):

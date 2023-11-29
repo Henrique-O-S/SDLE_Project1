@@ -36,6 +36,8 @@ class Server:
                 self.create_item(request, client_id)
             elif request['action'] == 'get_items':
                 self.get_items(request, client_id)
+            else:
+                self.default_response(client_id)
 
     def create_shopping_list(self, request, client_id):
         name = request['name']
@@ -75,3 +77,7 @@ class Server:
         items = [{'id': row[0], 'name': row[1], 'quantity': row[2]} for row in cursor.fetchall()]
         conn.close()
         self.socket.send_json(items)
+
+    def default_response(self, client_id):
+        response = {'message': 'Im here bro'}
+        self.socket.send_multipart([client_id, json.dumps(response).encode('utf-8')])
