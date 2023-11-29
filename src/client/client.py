@@ -87,8 +87,8 @@ class Client:
 
     def refresh(self):
         self.refresh_shopping_lists()
-        for shopping_list_id in self.lists_crdt.value():
-            self.refresh_items(shopping_list_id)
+        for shopping_list in self.lists_crdt.value():
+            self.refresh_items(shopping_list[0])
 
 # --------------------------------------------------------------
 

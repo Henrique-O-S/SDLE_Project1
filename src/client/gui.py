@@ -35,7 +35,7 @@ class ArmazonGUI:
         self.header.pack(fill=tk.X)
 
     def refresh_button(self):
-        self.refresh_btn = tk.Button(self.root, text="🔄", font=("Arial", 12))
+        self.refresh_btn = tk.Button(self.root, text="🔄", font=("Arial", 12), command=self.client.refresh)
         self.refresh_btn.pack(pady=5)
 
     def home_button(self):
