@@ -1,20 +1,23 @@
 # --------------------------------------------------------------
-
+import sys
+sys.path.append('..')
+sys.path.append('../crdts')
 import uuid
 import zmq
 import json
 from datetime import datetime
 from db import ArmazonDB
-from crdts.lists_crdt import ListsCRDT
-from crdts.items_crdt import ItemsCRDT
-from client.gui import ArmazonGUI
+from items_crdt import ItemsCRDT
+from lists_crdt import ListsCRDT
+from gui import ArmazonGUI
+
 
 # --------------------------------------------------------------
 
 class Client:
     def __init__(self, name = 'client'):
         self.name = name
-        self.database = ArmazonDB("client/" + self.name)
+        self.database = ArmazonDB("../client/database/" + self.name)
         self.lists_crdt = ListsCRDT()
         self.items_crdt = {}
         self.gui = ArmazonGUI(self)
