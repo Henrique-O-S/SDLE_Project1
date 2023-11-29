@@ -4,21 +4,19 @@ import uuid
 import zmq
 import json
 from datetime import datetime
-import sys
-sys.path.append('../')
-sys.path.append('../crdts/')
 from db import ArmazonDB
 from crdts import ListsCRDT, ItemsCRDT
-from gui import ArmazonGUI
+from client.gui import ArmazonGUI
 
 # --------------------------------------------------------------
 
 class Client:
-    def __init__(self, name = 'client'):
+    def __init__(self, name = 'client', port = 5559):
         self.name = name
+        self.port = port
         self.database = ArmazonDB("../client/databases/" + self.name)
         self.load_crdts()
-        self.connect(5559)
+        self.connect()
         self.gui = ArmazonGUI(self)
         
 # --------------------------------------------------------------
@@ -36,11 +34,11 @@ class Client:
 
 # --------------------------------------------------------------
 
-    def connect(self, port):
+    def connect(self):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
         self.socket.setsockopt(zmq.IDENTITY, str(self.name).encode('utf-8'))
-        self.socket.connect(f"tcp://127.0.0.1:{port}")
+        self.socket.connect(f"tcp://127.0.0.1:{self.port}")
 
     def send_request(self, message):
         self.socket.send_multipart([json.dumps(message).encode('utf-8')])
@@ -52,14 +50,14 @@ class Client:
     def get_shopping_list(self, id):
         shopping_list = self.database.get_shopping_list(id)
         if shopping_list == None:
-            data = self.server_shopping_list(id)
+            data = self.backend_shopping_list(id)
             if data['status'] == 'OK':
                 self.database.add_shopping_list(data['id'], data['name'])
                 for item in data['items']:
                     self.database.add_item(item['name'], item['quantity'], data['id'])
         return shopping_list
     
-    def server_shopping_list(self, id):
+    def backend_shopping_list(self, id):
         message = {'action': 'get_shopping_list', 'id': id}
         self.socket.send_multipart([json.dumps(message).encode('utf-8')])
         multipart_message = self.socket.recv_multipart()
@@ -106,20 +104,20 @@ class Client:
 # --------------------------------------------------------------
 
     def refresh_shopping_lists(self):
-        server_lists_crdt = self.server_lists_crdt()
-        self.lists_crdt.removal_merge(server_lists_crdt)
+        backend_lists_crdt = self.backend_lists_crdt()
+        self.lists_crdt.removal_merge(backend_lists_crdt)
         self.update_db_lists()
 
-    def server_lists_crdt(self):
-        server_lists_crdt = ListsCRDT()
-        message = {'action': 'update_shopping_lists_crdt', 'crdt': self.lists_crdt.to_json()}
+    def backend_lists_crdt(self):
+        backend_lists_crdt = ListsCRDT()
+        message = {'action': 'crdts', 'crdt': self.lists_crdt.to_json()}
         self.socket.send_multipart([json.dumps(message).encode('utf-8')])
         multipart_message = self.socket.recv_multipart()
         print("REQ // Raw message from broker | ", multipart_message)
         response = json.loads(multipart_message[0].decode('utf-8'))
         print(response)
         print(response['message'])
-        return server_lists_crdt
+        return backend_lists_crdt
     
     def update_db_lists(self):
         for element in self.lists_crdt.remove_set:
@@ -128,20 +126,20 @@ class Client:
 # --------------------------------------------------------------
 
     def refresh_items(self, shopping_list_id):
-        server_items_crdt = self.server_items_crdt(shopping_list_id)
-        self.items_crdt[shopping_list_id].merge(server_items_crdt)
+        backend_items_crdt = self.backend_items_crdt(shopping_list_id)
+        self.items_crdt[shopping_list_id].merge(backend_items_crdt)
 
-    def server_items_crdt(self, shopping_list_id):
-        server_items_crdt = ItemsCRDT()
+    def backend_items_crdt(self, shopping_list_id):
+        backend_items_crdt = ItemsCRDT()
         #response = self.send_request({'type': 'refresh_items', 'id': shopping_list_id})
         #if response['status'] == 'OK':
-        #    print('Server response: OK')
+        #    print('backend response: OK')
         #    for item in response['actions']:
         #        if item['type'] == 'update_item':
-        #            server_items_crdt.add((item['name'], item['quantity']), item['timestamp'])
+        #            backend_items_crdt.add((item['name'], item['quantity']), item['timestamp'])
         #        elif item['type'] == 'remove_item':
-        #            server_items_crdt.remove((item['name'], item['quantity']), item['timestamp'])
-        return server_items_crdt
+        #            backend_items_crdt.remove((item['name'], item['quantity']), item['timestamp'])
+        return backend_items_crdt
 
     def update_db_items(self, shopping_list_id):
         for element in self.items_crdt[shopping_list_id].add_set:

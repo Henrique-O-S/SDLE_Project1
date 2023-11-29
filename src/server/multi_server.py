@@ -1,6 +1,10 @@
+# --------------------------------------------------------------
+
 import concurrent.futures
-from server import Server
-from ring import ConsistentHashRing
+from server.server import Server
+from server.ring import ConsistentHashRing
+
+# --------------------------------------------------------------
 
 class MultiServer:
     NUM_SERVERS = 5
@@ -8,6 +12,8 @@ class MultiServer:
 
     servers = [Server(name=f"server_{i}", port=6000 + i) for i in range(NUM_SERVERS)]
     ring = ConsistentHashRing(servers, NUM_VIRTUAL_NODES, plot=False, test= True, hashing_option=2)
+
+# --------------------------------------------------------------
 
     @staticmethod
     def run_server(server):
@@ -21,10 +27,5 @@ class MultiServer:
     @staticmethod
     def get_server(key):
         return MultiServer.ring.get_node(key)
-
-if __name__ == '__main__':
-    # Start servers
-    MultiServer.start_servers()
-
-
-    print("All servers terminated.")
+    
+# --------------------------------------------------------------

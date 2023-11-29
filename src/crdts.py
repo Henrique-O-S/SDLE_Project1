@@ -1,5 +1,9 @@
+# --------------------------------------------------------------
+
 from collections import defaultdict
 from datetime import datetime
+
+# --------------------------------------------------------------
 
 class ListsCRDT:
     def __init__(self):
@@ -36,6 +40,8 @@ class ListsCRDT:
         crdt.remove_set = set(json_data['remove_set'])
         return crdt
     
+# --------------------------------------------------------------
+    
 class ItemsCRDT:
     def __init__(self):
         self.add_set = defaultdict(float)
@@ -57,3 +63,5 @@ class ItemsCRDT:
 
     def value(self):
         return {element for element, add_time in self.add_set.items() if add_time >= self.remove_set.get(element, 0)}
+    
+# --------------------------------------------------------------
