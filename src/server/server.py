@@ -30,12 +30,8 @@ class Server:
 
             if request['action'] == 'create_shopping_list':
                 self.create_shopping_list(request, client_id)
-            elif request['action'] == 'get_shopping_lists':
-                self.get_shopping_lists(client_id)
-            elif request['action'] == 'create_item':
-                self.create_item(request, client_id)
-            elif request['action'] == 'get_items':
-                self.get_items(request, client_id)
+            elif request['action'] == 'update_shopping_lists_crdt':
+                self.update_shopping_lists_crdt(request, client_id)
             else:
                 self.default_response(client_id)
 
@@ -49,7 +45,7 @@ class Server:
         response = {'message': 'Shopping list created successfully'}
         self.socket.send_multipart([client_id, json.dumps(response).encode('utf-8')])
 
-    def get_shopping_lists(self, client_id):
+    """ def get_shopping_lists(self, client_id):
         conn = sqlite3.connect(self.get_database_path())
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM shopping_lists')
@@ -77,7 +73,20 @@ class Server:
         items = [{'id': row[0], 'name': row[1], 'quantity': row[2]} for row in cursor.fetchall()]
         conn.close()
         self.socket.send_json(items)
-
+ """
     def default_response(self, client_id):
         response = {'message': 'Im here bro'}
         self.socket.send_multipart([client_id, json.dumps(response).encode('utf-8')])
+
+    def update_shopping_lists_crdt(self, request, client_id):
+        print("SERVER // Update shopping lists CRDT")
+        #print(request)
+        """ crdt_json = request['crdt']
+        for el in crdt_json['add_set']:
+            shopping_list = self.database.get_shopping_list(el[0])
+            if shopping_list == None:
+                self.database.add_shopping_list(el[0], el[1])
+        for el in crdt_json['remove_set']:
+            self.database.delete_shopping_list(el[0])
+        response = {'message': 'Shopping lists CRDT updated successfully'}
+        self.socket.send_multipart([client_id, json.dumps(response).encode('utf-8')]) """

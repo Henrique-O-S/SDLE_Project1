@@ -4,16 +4,19 @@ import uuid
 import zmq
 import json
 from datetime import datetime
+import sys
+sys.path.append('../')
+sys.path.append('../crdts/')
 from db import ArmazonDB
 from crdts import ListsCRDT, ItemsCRDT
-from client.gui import ArmazonGUI
+from gui import ArmazonGUI
 
 # --------------------------------------------------------------
 
 class Client:
     def __init__(self, name = 'client'):
         self.name = name
-        self.database = ArmazonDB("client/databases/" + self.name)
+        self.database = ArmazonDB("../client/databases/" + self.name)
         self.load_crdts()
         self.connect(5559)
         self.gui = ArmazonGUI(self)
