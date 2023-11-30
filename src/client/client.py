@@ -118,7 +118,6 @@ class Client:
         print("REQ // Raw message from broker | ", multipart_message)
         response = json.loads(multipart_message[0].decode('utf-8'))
         print(response)
-        print(response['message'])
         return backend_lists_crdt
     
     def update_db_lists(self):

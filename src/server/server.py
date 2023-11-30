@@ -52,7 +52,7 @@ class Server:
 
     def process_request(self, request, client_id):
         if request['action'] == 'get_shopping_list':
-            self.get_shopping_list(request['id'], client_id)
+            self.default_response(client_id)
         elif request['action'] == 'crdts':
             print(request)
             self.default_response(client_id)
