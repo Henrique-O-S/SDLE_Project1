@@ -11,7 +11,7 @@ class MultiServer:
     NUM_VIRTUAL_NODES = 20
 
     servers = [Server(name=f"server_{i}", port=6000 + i) for i in range(NUM_SERVERS)]
-    ring = ConsistentHashRing(servers, NUM_VIRTUAL_NODES, plot=False, test= True, hashing_option=2)
+    ring = ConsistentHashRing(servers, NUM_VIRTUAL_NODES, plot=False, test=False, hashing_option=2)
 
 # --------------------------------------------------------------
 
@@ -27,5 +27,5 @@ class MultiServer:
     @staticmethod
     def get_server(key):
         return MultiServer.ring.get_node(key)
-    
+
 # --------------------------------------------------------------

@@ -14,7 +14,7 @@ class Client:
     def __init__(self, name = 'client', port = 5559):
         self.name = name
         self.port = port
-        self.database = ArmazonDB("../client/databases/" + self.name)
+        self.database = ArmazonDB("client/databases/" + self.name)
         self.load_crdts()
         self.connect()
         self.gui = ArmazonGUI(self)
@@ -43,7 +43,9 @@ class Client:
     def send_request(self, message):
         self.socket.send_multipart([json.dumps(message).encode('utf-8')])
         multipart_message = self.socket.recv_multipart()
-        return json.loads(multipart_message[0].decode('utf-8'))
+        response = json.loads(multipart_message[0].decode('utf-8'))
+        print(response)
+        return response
 
 # --------------------------------------------------------------
 
@@ -98,8 +100,8 @@ class Client:
 
     def refresh(self):
         self.refresh_shopping_lists()
-        for shopping_list in self.lists_crdt.value():
-            self.refresh_items(shopping_list[0])
+        #for shopping_list in self.lists_crdt.value():
+        #    self.refresh_items(shopping_list[0])
 
 # --------------------------------------------------------------
 

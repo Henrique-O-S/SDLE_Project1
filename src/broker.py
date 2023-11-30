@@ -33,6 +33,7 @@ class Broker:
 
     def run(self):
         while True:
+            print("Waiting for message from client or server...")
             self.socks = dict(self.poller.poll())
             self.frontend_polling()
             self.backend_polling()
@@ -43,7 +44,9 @@ class Broker:
             print("ROUTER // Raw message from client | ", multipart_message)
             client_id, dummy, message = multipart_message[0:]
             message = json.loads(message.decode('utf-8'))
-            if message['action'] == 'crdts':
+            if message['action'] == 'get_shopping_list':
+                self.search_shopping_list(message['id'], client_id)
+            elif message['action'] == 'crdts':
                 self.crdts_to_backend(message['crdt'], client_id)
 
     def backend_polling(self):
@@ -52,6 +55,15 @@ class Broker:
             print("DEALER // Raw message from server | ", multipart_message)
             client_identity, response = multipart_message[1], multipart_message[2]
             self.frontend_socket.send_multipart([client_identity, b"", response])
+
+# --------------------------------------------------------------
+
+    def search_shopping_list(self, id, client_id):
+        server = MultiServer.get_server(id)
+        self.backend_socket.connect(server.address)
+        message = {'action': 'get_shopping_list', 'id': id}
+        self.backend_socket.send_multipart([b"", client_id, json.dumps(message).encode('utf-8')])
+        time.sleep(1)
 
 # --------------------------------------------------------------
 
