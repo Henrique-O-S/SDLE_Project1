@@ -12,6 +12,8 @@ class Server:
         self.name = name
         self.port = port
         self.address = f"tcp://127.0.0.1:{self.port}"
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.REP)
         self.database = ArmazonDB("server/databases/" + self.name)
         self.load_crdts()
 
@@ -32,8 +34,6 @@ class Server:
 # --------------------------------------------------------------
 
     def connect(self):
-        self.context = zmq.Context()
-        self.socket = self.context.socket(zmq.REP)
         self.socket.bind(self.address)
         print(f"Server listening on port {self.port}...")
 
@@ -51,32 +51,44 @@ class Server:
             self.process_request(request, client_id)
 
     def process_request(self, request, client_id):
-        if request['action'] == 'get_shopping_list':
-            self.default_response(client_id)
-        elif request['action'] == 'crdts':
-            print(request)
-            self.default_response(client_id)
-        else:
-            self.default_response(client_id)
+        #if request['action'] == 'get_shopping_list':
+        #    self.get_shopping_list(request, client_id)
+        #elif request['action'] == 'crdts':
+        #    self.process_crdts(request, client_id)
+        #else:
+        self.default_response(client_id)
 
 # --------------------------------------------------------------
 
-    def get_shopping_list(self, shopping_list_id, client_id):
+    def get_shopping_list(self, request, client_id):
+        shopping_list_id = request['id']
         shopping_list = self.database.get_shopping_list(shopping_list_id)
         if shopping_list == None:
-            response = {'status': 'ERROR', 'message': 'Shopping list not found'}
+            response = {'action': 'get_shopping_list', 'message': 'Shopping list not found'}
         else:
             items = self.database.get_items(shopping_list_id)
-            response = {'status': 'OK', 'id': shopping_list[0], 'name': shopping_list[1], 'items': items}
+            response = {'action': 'get_shopping_list', 'id': shopping_list[0], 'name': shopping_list[1], 'items': items}
         self.socket.send_multipart([client_id, json.dumps(response).encode('utf-8')])
 
-    def process_crdts(self, crdt, client_id):
-        print(crdt)
-        response = {'status': 'OK'}
+    def process_crdts(self, request, client_id):
+        crdt = ListsCRDT.from_json(request)
+        self.lists_crdt.merge(crdt)
+        response = {'action': 'crdts', 'crdt': self.lists_crdt.to_json()}
         self.socket.send_multipart([client_id, json.dumps(response).encode('utf-8')])
+        self.update_db_lists()
 
     def default_response(self, client_id):
         response = {'status': 'OK'}
         self.socket.send_multipart([client_id, json.dumps(response).encode('utf-8')])
+
+# --------------------------------------------------------------
+
+    def update_db_lists(self):
+        for element in self.lists_crdt.add_set:
+            shopping_list = self.database.get_shopping_list(element[0])
+            if shopping_list == None:
+                self.database.add_shopping_list(element[0], element[1])
+        for element in self.lists_crdt.remove_set:
+            self.database.delete_shopping_list(element[0])
 
 # --------------------------------------------------------------

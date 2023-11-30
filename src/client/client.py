@@ -90,7 +90,6 @@ class Client:
         timestamp = datetime.now().timestamp()
         self.items_crdt[shopping_list_id].add((name, quantity), timestamp)
 
-
     def delete_item(self, shopping_list_id, name, quantity):
         self.database.delete_item(name, shopping_list_id)
         timestamp = datetime.now().timestamp()

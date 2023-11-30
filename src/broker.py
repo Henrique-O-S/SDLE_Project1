@@ -53,8 +53,11 @@ class Broker:
         if self.backend_socket in self.socks and self.socks[self.backend_socket] == zmq.POLLIN:
             multipart_message = self.backend_socket.recv_multipart()
             print("DEALER // Raw message from server | ", multipart_message)
-            client_identity, response = multipart_message[1], multipart_message[2]
-            self.frontend_socket.send_multipart([client_identity, b"", response])
+            client_id, message = multipart_message[1], multipart_message[2]
+            #message = json.loads(message.decode('utf-8'))
+            #if (message['action']) == 'crdts':
+            #    self.crdts_to_frontend(message['crdt'], client_id)
+            self.frontend_socket.send_multipart([client_id, b"", message])
 
 # --------------------------------------------------------------
 
@@ -92,5 +95,11 @@ class Broker:
                 crdt_json['action'] = 'crdts'
                 self.backend_socket.send_multipart([b"", client_id, json.dumps(crdt_json).encode('utf-8')])
                 time.sleep(1)
+
+# --------------------------------------------------------------
+
+    def crdts_to_frontend(self, crdt_json, client_id):
+        crdt_json['action'] = 'crdts'
+        self.frontend_socket.send_multipart([client_id, b"", json.dumps(crdt_json).encode('utf-8')])
 
 # --------------------------------------------------------------
