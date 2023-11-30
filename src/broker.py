@@ -94,7 +94,7 @@ class Broker:
                 crdt_json = crdt.to_json()
                 crdt_json['action'] = 'crdts'
                 self.backend_socket.send_multipart([b"", client_id, json.dumps(crdt_json).encode('utf-8')])
-                time.sleep(1)
+                self.backend_socket.disconnect(server.address)
 
 # --------------------------------------------------------------
 
