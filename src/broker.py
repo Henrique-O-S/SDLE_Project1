@@ -9,8 +9,9 @@ from crdts import ListsCRDT, ItemsCRDT
 # --------------------------------------------------------------
 
 class Broker:
-    def __init__(self, frontend_port=5559, backend_port=5560, pulse_check_interval=5):
+    def __init__(self, frontend_port=5559, backend_port=5560, pulse_check_interval=5, message_receive_timeout=2):
         self.pulse_check_interval = pulse_check_interval
+        self.message_receive_timeout = message_receive_timeout
         self.last_pulse_check = time.time()
         self.frontend_port = frontend_port
         self.backend_port = backend_port
@@ -96,7 +97,6 @@ class Broker:
             if crdt.add_set or crdt.remove_set:
                 # Connect to the server
                 self.backend_socket.connect(server.address)
-
                 # Send the message to the server
                 crdt_json = crdt.to_json()
                 crdt_json['action'] = 'crdts'
@@ -105,7 +105,8 @@ class Broker:
 
                 # Receive the response from the server
                 _, response = self.receiveMessage(self.backend_socket)
-
+                if not response:
+                    print("NULL RESPONSE")
                 responses.append(response)
                 # Disconnect from the server
                 self.backend_socket.disconnect(server.address)
@@ -129,15 +130,15 @@ class Broker:
             self.sendMessage(self.backend_socket, b"", message)
 
             _, response = self.receiveMessage(self.backend_socket)
-            if response['status'] == 'OK':
-                print('PULSE CONFIRMED', server.address)
+            if response:
+                if response['status'] == 'OK':
+                    server.online = True
+                    print('PULSE CONFIRMED', server.address)
             else:
                 server.online = False
                 print('backend response: NOT OK')
 
             self.backend_socket.disconnect(server.address)
-    
-
 
     def receiveMessage(self, socket):
         offset = 0
@@ -145,11 +146,20 @@ class Broker:
         if socket == self.frontend_socket:
             source = 'client'
             offset = 1
-        multipart_message = socket.recv_multipart()
-        print("Raw message from ", source, " | ", multipart_message)
-        client_id, message = multipart_message[1 - offset], multipart_message[2]
-        message = json.loads(message.decode('utf-8'))
-        return client_id, message
+        try:
+            sockets = dict(self.poller.poll(self.message_receive_timeout * 1000))
+            if socket in sockets and sockets[socket] == zmq.POLLIN:
+                multipart_message = socket.recv_multipart()
+                print("Raw message from ", source, " | ", multipart_message)
+                client_id, message = multipart_message[1 - offset], multipart_message[2]
+                message = json.loads(message.decode('utf-8'))
+                return client_id, message
+            else:
+                print(f"No message received within {self.message_receive_timeout} seconds from {source}")
+                return None, None
+        except zmq.ZMQError as e:
+            print(f"Error receiving message from {source}: {e}")
+            return None, None
 
     def sendMessage(self, socket, client_id, message):
         if socket == self.frontend_socket:
