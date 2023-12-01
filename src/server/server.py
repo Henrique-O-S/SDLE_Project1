@@ -77,7 +77,7 @@ class Server:
         self.update_db_lists()
 
     def default_response(self, client_id):
-        response = {'status': 'OK'}
+        response = {'statusw': 'OK'}
         self.socket.send_multipart([client_id, json.dumps(response).encode('utf-8')])
 
 # --------------------------------------------------------------
