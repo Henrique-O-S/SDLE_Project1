@@ -38,7 +38,7 @@ class Broker:
             current_time = time.time()
             if current_time - self.last_pulse_check >= self.pulse_check_interval:
                 print("Sending pulse check to servers...")
-                #self.pulse_check_to_servers()
+                self.pulse_check_to_servers()
                 self.last_pulse_check = current_time
             print("Waiting for message from client or server...")
             self.socks = dict(self.poller.poll(1000))
@@ -144,9 +144,7 @@ class Broker:
         if socket == self.frontend_socket:
             source = 'client'
             offset = 1
-        print("a")
         multipart_message = socket.recv_multipart()
-        print("b")
         print("Raw message from ", source, " | ", multipart_message)
         client_id, message = multipart_message[1 - offset], multipart_message[2]
         message = json.loads(message.decode('utf-8'))
