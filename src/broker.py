@@ -38,7 +38,7 @@ class Broker:
             current_time = time.time()
             if current_time - self.last_pulse_check >= self.pulse_check_interval:
                 print("Sending pulse check to servers...")
-                self.pulse_check_to_servers()
+                #self.pulse_check_to_servers()
                 self.last_pulse_check = current_time
             print("Waiting for message from client or server...")
             self.socks = dict(self.poller.poll(1000))
@@ -104,7 +104,8 @@ class Broker:
                 print(server.address, crdt.to_json())
 
                 # Receive the response from the server
-                client_id, response = self.receiveMessage(self.backend_socket)
+                _, response = self.receiveMessage(self.backend_socket)
+
                 responses.append(response)
                 # Disconnect from the server
                 self.backend_socket.disconnect(server.address)
@@ -138,15 +139,21 @@ class Broker:
 
 
     def receiveMessage(self, socket):
+        offset = 0
+        source = 'server'
         if socket == self.frontend_socket:
             source = 'client'
-        else:
-            source = 'server'
+            offset = 1
+        print("a")
         multipart_message = socket.recv_multipart()
+        print("b")
         print("Raw message from ", source, " | ", multipart_message)
-        client_id, message = multipart_message[1], multipart_message[2]
+        client_id, message = multipart_message[1 - offset], multipart_message[2]
         message = json.loads(message.decode('utf-8'))
         return client_id, message
 
     def sendMessage(self, socket, client_id, message):
-        socket.send_multipart([client_id, b"", json.dumps(message).encode('utf-8')])
+        if socket == self.frontend_socket:
+            socket.send_multipart([client_id, b"", json.dumps(message).encode('utf-8')])
+        else:
+            socket.send_multipart([b"", client_id, json.dumps(message).encode('utf-8')])
