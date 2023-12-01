@@ -45,9 +45,10 @@ class Broker:
             client_id, dummy, message = multipart_message[0:]
             message = json.loads(message.decode('utf-8'))
             if message['action'] == 'get_shopping_list':
+                print("if print then gg")
                 self.search_shopping_list(message['id'], client_id)
             elif message['action'] == 'crdts':
-                self.crdts_to_backend(message['crdt'], client_id)
+                self.send_lists_backend(message['crdt'], client_id)
 
     def backend_polling(self):
         if self.backend_socket in self.socks and self.socks[self.backend_socket] == zmq.POLLIN:
@@ -59,25 +60,28 @@ class Broker:
             #    self.crdts_to_frontend(message['crdt'], client_id)
             self.frontend_socket.send_multipart([client_id, b"", message])
 
+
 # --------------------------------------------------------------
 
     def search_shopping_list(self, id, client_id):
         server = MultiServer.get_server(id)
         self.backend_socket.connect(server.address)
+        time.sleep(2)
         message = {'action': 'get_shopping_list', 'id': id}
         self.backend_socket.send_multipart([b"", client_id, json.dumps(message).encode('utf-8')])
-        time.sleep(1)
 
 # --------------------------------------------------------------
 
-    def crdts_to_backend(self, crdt_json, client_id):
+    def send_lists_backend(self, crdt_json, client_id):
         servers_info = self.distribute_crdts(crdt_json)
         self.crdts_to_servers(client_id, servers_info)
 
     def distribute_crdts(self, crdt_json):
         servers_info = {server: ListsCRDT() for server in MultiServer.servers}
         for element in crdt_json['add_set']:
+            print(element)
             server = MultiServer.get_server(element[0])
+            print(server.address)
             servers_info[server].add((element[0], element[1]))
         for element in crdt_json['remove_set']:
             server = MultiServer.get_server(element[0])
@@ -85,16 +89,32 @@ class Broker:
         return servers_info
 
     def crdts_to_servers(self, client_id, servers):
-        for server in servers:
-            print(server.name, servers[server].add_set, servers[server].remove_set)
         for server, crdt in servers.items():
+            print("NOW AT", server.address)
             if crdt.add_set or crdt.remove_set:
-                print(server.address, crdt.to_json())
+                # Connect to the server
                 self.backend_socket.connect(server.address)
+                time.sleep(1)
+
+                # Send the message to the server
                 crdt_json = crdt.to_json()
                 crdt_json['action'] = 'crdts'
                 self.backend_socket.send_multipart([b"", client_id, json.dumps(crdt_json).encode('utf-8')])
+                print(server.address, crdt.to_json())
+                time.sleep(1)
+
+                # Receive the response from the server
+                multipart_message = self.backend_socket.recv_multipart()
+                print("DEALER // Raw message from server | ", multipart_message)
+                client_identity, response = multipart_message[1], multipart_message[2]
+                self.frontend_socket.send_multipart([client_identity, b"", response])
+
+                # Disconnect from the server
                 self.backend_socket.disconnect(server.address)
+
+        # Note: This ensures that each server is processed one at a time.
+
+    # ... (existing code)
 
 # --------------------------------------------------------------
 

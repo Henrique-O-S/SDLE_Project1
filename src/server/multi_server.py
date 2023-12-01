@@ -10,7 +10,7 @@ class MultiServer:
     NUM_SERVERS = 5
     NUM_VIRTUAL_NODES = 20
 
-    servers = [Server(name=f"server_{i}", port=6000 + i) for i in range(NUM_SERVERS)]
+    servers = [Server(name=f"server_{i}", port=8000 + i) for i in range(NUM_SERVERS)]
     ring = ConsistentHashRing(servers, NUM_VIRTUAL_NODES, plot=False, test=False, hashing_option=2)
 
 # --------------------------------------------------------------

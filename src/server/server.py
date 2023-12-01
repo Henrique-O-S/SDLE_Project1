@@ -34,18 +34,17 @@ class Server:
 # --------------------------------------------------------------
 
     def connect(self):
-        self.socket.bind(self.address)
         print(f"Server listening on port {self.port}...")
 
 # --------------------------------------------------------------
 
     def run(self):
+        self.socket.bind(self.address)
         self.connect()
         while True:
             print("Waiting for message from broker...")
             multipart_message = self.socket.recv_multipart()
-            print("SERVER RECEIVED MESSAGE", self.address)
-            print("REP // Raw message from broker | ", multipart_message)
+            print(self.address, "// Raw message from broker | ", multipart_message)
             request = json.loads(multipart_message[1].decode('utf-8'))
             client_id = multipart_message[0]
             self.process_request(request, client_id)

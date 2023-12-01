@@ -105,11 +105,11 @@ class Client:
 # --------------------------------------------------------------
 
     def refresh_shopping_lists(self):
-        backend_lists_crdt = self.backend_lists_crdt()
-        self.lists_crdt.removal_merge(backend_lists_crdt)
-        self.update_db_lists()
+        backend_lists_crdt = self.send_lists_backend()
+        #self.lists_crdt.removal_merge(backend_lists_crdt)
+        #self.update_db_lists()
 
-    def backend_lists_crdt(self):
+    def send_lists_backend(self):
         backend_lists_crdt = ListsCRDT()
         message = {'action': 'crdts', 'crdt': self.lists_crdt.to_json()}
         self.socket.send_multipart([json.dumps(message).encode('utf-8')])
