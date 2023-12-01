@@ -132,6 +132,7 @@ class Broker:
             if response['status'] == 'OK':
                 print('PULSE CONFIRMED', server.address)
             else:
+                server.online = False
                 print('backend response: NOT OK')
 
             self.backend_socket.disconnect(server.address)

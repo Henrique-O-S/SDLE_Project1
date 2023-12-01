@@ -10,6 +10,7 @@ from crdts import ListsCRDT, ItemsCRDT
 class Server:
     def __init__(self, name = 'server', port = 6000):
         self.name = name
+        self.online = True
         self.port = port
         self.address = f"tcp://127.0.0.1:{self.port}"
         self.context = zmq.Context()
