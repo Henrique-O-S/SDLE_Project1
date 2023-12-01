@@ -55,7 +55,10 @@ class Server:
         #elif request['action'] == 'crdts':
         #    self.process_crdts(request, client_id)
         #else:
-        self.default_response(client_id)
+        if request['action'] == 'r_u_there':
+            self.send_pulse()
+        else:
+            self.default_response(client_id)
 
 # --------------------------------------------------------------
 
@@ -77,7 +80,7 @@ class Server:
         self.update_db_lists()
 
     def default_response(self, client_id):
-        response = {'statusw': 'OK'}
+        response = {'status': 'OK'}
         self.socket.send_multipart([client_id, json.dumps(response).encode('utf-8')])
 
 # --------------------------------------------------------------
@@ -91,3 +94,6 @@ class Server:
             self.database.delete_shopping_list(element[0])
 
 # --------------------------------------------------------------
+    def send_pulse(self):
+        response = {'status': 'OK'}
+        self.socket.send_multipart([b"", json.dumps(response).encode('utf-8')])
