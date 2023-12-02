@@ -34,6 +34,35 @@ class Broker:
 
 # --------------------------------------------------------------
 
+    def receiveMessage(self, socket):
+        offset = 0
+        source = 'server'
+        if socket == self.frontend_socket:
+            source = 'client'
+            offset = 1
+        try:
+            sockets = dict(self.poller.poll(self.message_receive_timeout * 1000))
+            if socket in sockets and sockets[socket] == zmq.POLLIN:
+                multipart_message = socket.recv_multipart()
+                print("Raw message from ", source, " | ", multipart_message)
+                client_id, message = multipart_message[1 - offset], multipart_message[2]
+                message = json.loads(message.decode('utf-8'))
+                return client_id, message
+            else:
+                print(f"No message received within {self.message_receive_timeout} seconds from {source}")
+                return None, None
+        except zmq.ZMQError as e:
+            print(f"Error receiving message from {source}: {e}")
+            return None, None
+
+    def sendMessage(self, socket, client_id, message):
+        if socket == self.frontend_socket:
+            socket.send_multipart([client_id, b"", json.dumps(message).encode('utf-8')])
+        else:
+            socket.send_multipart([b"", client_id, json.dumps(message).encode('utf-8')])
+
+# --------------------------------------------------------------
+
     def run(self):
         while True:
             current_time = time.time()
@@ -113,7 +142,6 @@ class Broker:
                 time.sleep(1)
         self.crdts_to_client(client_id)
 
-
 # --------------------------------------------------------------
 
     def crdts_to_client(self, client_id):
@@ -123,6 +151,7 @@ class Broker:
         self.sendMessage(self.frontend_socket, client_id, crdt_json)
 
 # --------------------------------------------------------------
+
     def pulse_check_to_servers(self):
         for server in MultiServer.servers:
             self.backend_socket.connect(server.address)
@@ -140,29 +169,4 @@ class Broker:
 
             self.backend_socket.disconnect(server.address)
 
-    def receiveMessage(self, socket):
-        offset = 0
-        source = 'server'
-        if socket == self.frontend_socket:
-            source = 'client'
-            offset = 1
-        try:
-            sockets = dict(self.poller.poll(self.message_receive_timeout * 1000))
-            if socket in sockets and sockets[socket] == zmq.POLLIN:
-                multipart_message = socket.recv_multipart()
-                print("Raw message from ", source, " | ", multipart_message)
-                client_id, message = multipart_message[1 - offset], multipart_message[2]
-                message = json.loads(message.decode('utf-8'))
-                return client_id, message
-            else:
-                print(f"No message received within {self.message_receive_timeout} seconds from {source}")
-                return None, None
-        except zmq.ZMQError as e:
-            print(f"Error receiving message from {source}: {e}")
-            return None, None
-
-    def sendMessage(self, socket, client_id, message):
-        if socket == self.frontend_socket:
-            socket.send_multipart([client_id, b"", json.dumps(message).encode('utf-8')])
-        else:
-            socket.send_multipart([b"", client_id, json.dumps(message).encode('utf-8')])
+# --------------------------------------------------------------

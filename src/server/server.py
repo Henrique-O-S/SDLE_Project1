@@ -40,6 +40,18 @@ class Server:
 
 # --------------------------------------------------------------
 
+    def receiveMessage(self):
+        multipart_message = self.socket.recv_multipart()
+        print("Raw message from broker | ", multipart_message)
+        client_id, message = multipart_message[0], multipart_message[1]
+        message = json.loads(message.decode('utf-8'))
+        return client_id, message
+
+    def sendMessage(self, client_id, message):
+        self.socket.send_multipart([client_id, json.dumps(message).encode('utf-8')])
+
+# --------------------------------------------------------------
+
     def run(self):
         self.connect()
         while True:
@@ -48,17 +60,20 @@ class Server:
             self.process_request(request, client_id)
 
     def process_request(self, request, client_id):
-        #if request['action'] == 'get_shopping_list':
-        #    self.get_shopping_list(request, client_id)
-        #elif request['action'] == 'crdts':
-        #    self.process_crdts(request, client_id)
-        #else:
         if request['action'] == 'r_u_there':
             self.send_pulse()
+        elif request['action'] == 'get_shopping_list':
+            self.get_shopping_list(request, client_id)
+        elif request['action'] == 'crdts':
+            self.process_crdts(request, client_id)
         else:
             self.default_response(client_id)
-
+        
 # --------------------------------------------------------------
+
+    def send_pulse(self):
+        response = {'status': 'OK'}
+        self.sendMessage(b"", response)
 
     def get_shopping_list(self, request, client_id):
         shopping_list_id = request['id']
@@ -92,16 +107,3 @@ class Server:
             self.database.delete_shopping_list(element[0])
 
 # --------------------------------------------------------------
-    def send_pulse(self):
-        response = {'status': 'OK'}
-        self.sendMessage(b"", response)
-
-    def receiveMessage(self):
-        multipart_message = self.socket.recv_multipart()
-        print("Raw message from broker | ", multipart_message)
-        client_id, message = multipart_message[0], multipart_message[1]
-        message = json.loads(message.decode('utf-8'))
-        return client_id, message
-
-    def sendMessage(self, client_id, message):
-        self.socket.send_multipart([client_id, json.dumps(message).encode('utf-8')])
