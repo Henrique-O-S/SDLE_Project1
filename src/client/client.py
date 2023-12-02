@@ -40,11 +40,11 @@ class Client:
         self.socket.setsockopt(zmq.IDENTITY, str(self.name).encode('utf-8'))
         self.socket.connect(f"tcp://127.0.0.1:{self.port}")
 
-    def send_request(self, message):
+    def send_request_receive_reply(self, message):
         self.socket.send_multipart([json.dumps(message).encode('utf-8')])
         multipart_message = self.socket.recv_multipart()
+        print("REQ // Raw message from broker | ", multipart_message)
         response = json.loads(multipart_message[0].decode('utf-8'))
-        print(response)
         return response
 
 # --------------------------------------------------------------
@@ -52,19 +52,13 @@ class Client:
     def get_shopping_list(self, id):
         shopping_list = self.database.get_shopping_list(id)
         if shopping_list == None:
-            data = self.backend_shopping_list(id)
+            message = {'action': 'get_shopping_list', 'id': id}
+            data = self.send_request_receive_reply(message)
             if data['status'] == 'OK':
                 self.database.add_shopping_list(data['id'], data['name'])
                 for item in data['items']:
                     self.database.add_item(item['name'], item['quantity'], data['id'])
         return shopping_list
-    
-    def backend_shopping_list(self, id):
-        message = {'action': 'get_shopping_list', 'id': id}
-        self.socket.send_multipart([json.dumps(message).encode('utf-8')])
-        multipart_message = self.socket.recv_multipart()
-        response = json.loads(multipart_message[0].decode('utf-8'))
-        return response
 
     def add_shopping_list(self, name):
         id = str(uuid.uuid4())
@@ -96,7 +90,7 @@ class Client:
         self.items_crdt[shopping_list_id].remove((name, quantity), timestamp)
 
 # --------------------------------------------------------------
-
+#  TRIGGERED BY GUI REFRESH BUTTON
     def refresh(self):
         self.refresh_shopping_lists()
         #for shopping_list in self.lists_crdt.value():
@@ -105,20 +99,15 @@ class Client:
 # --------------------------------------------------------------
 
     def refresh_shopping_lists(self):
-        backend_lists_crdt = self.send_lists_backend()
+        backend_lists_crdt = self.lists_to_broker()
         #self.lists_crdt.removal_merge(backend_lists_crdt)
         #self.update_db_lists()
 
-    def send_lists_backend(self):
+    def lists_to_broker(self):
         backend_lists_crdt = ListsCRDT()
         message = {'action': 'crdts', 'crdt': self.lists_crdt.to_json()}
-        self.socket.send_multipart([json.dumps(message).encode('utf-8')])
-        multipart_message = self.socket.recv_multipart()
-        print("REQ // Raw message from broker | ", multipart_message)
-        response = json.loads(multipart_message[0].decode('utf-8'))
+        response = self.send_request_receive_reply(message)
         print(response)
-
-
         return backend_lists_crdt
     
     def update_db_lists(self):
