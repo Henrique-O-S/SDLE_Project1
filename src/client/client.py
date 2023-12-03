@@ -43,7 +43,7 @@ class Client:
     def send_request_receive_reply(self, message):
         self.socket.send_multipart([json.dumps(message).encode('utf-8')])
         multipart_message = self.socket.recv_multipart()
-        print("REQ // Raw message from broker | ", multipart_message)
+        print("\n[BROKER] > ", multipart_message)
         response = json.loads(multipart_message[0].decode('utf-8'))
         return response
 
@@ -90,7 +90,7 @@ class Client:
         self.items_crdt[shopping_list_id].remove((name, quantity), timestamp)
 
 # --------------------------------------------------------------
-#  TRIGGERED BY GUI REFRESH BUTTON
+
     def refresh(self):
         self.refresh_shopping_lists()
         #for shopping_list in self.lists_crdt.value():
@@ -100,14 +100,14 @@ class Client:
 
     def refresh_shopping_lists(self):
         backend_lists_crdt = self.lists_to_broker()
-        #self.lists_crdt.removal_merge(backend_lists_crdt)
-        #self.update_db_lists()
+        self.lists_crdt.removal_merge(backend_lists_crdt)
+        self.update_db_lists()
 
     def lists_to_broker(self):
         backend_lists_crdt = ListsCRDT()
-        message = {'action': 'crdts', 'crdt': self.lists_crdt.to_json()}
-        response = self.send_request_receive_reply(message)
-        print(response)
+        crdt_json = self.lists_crdt.to_json()
+        crdt_json['action'] = 'crdts'
+        response = self.send_request_receive_reply(crdt_json)
         return backend_lists_crdt
     
     def update_db_lists(self):
@@ -122,14 +122,14 @@ class Client:
 
     def backend_items_crdt(self, shopping_list_id):
         backend_items_crdt = ItemsCRDT()
-        #response = self.send_request({'type': 'refresh_items', 'id': shopping_list_id})
-        #if response['status'] == 'OK':
-        #    print('backend response: OK')
-        #    for item in response['actions']:
-        #        if item['type'] == 'update_item':
-        #            backend_items_crdt.add((item['name'], item['quantity']), item['timestamp'])
-        #        elif item['type'] == 'remove_item':
-        #            backend_items_crdt.remove((item['name'], item['quantity']), item['timestamp'])
+        response = self.send_request({'type': 'refresh_items', 'id': shopping_list_id})
+        if response['status'] == 'OK':
+            print('backend response: OK')
+            for item in response['actions']:
+                if item['type'] == 'update_item':
+                    backend_items_crdt.add((item['name'], item['quantity']), item['timestamp'])
+                elif item['type'] == 'remove_item':
+                    backend_items_crdt.remove((item['name'], item['quantity']), item['timestamp'])
         return backend_items_crdt
 
     def update_db_items(self, shopping_list_id):
