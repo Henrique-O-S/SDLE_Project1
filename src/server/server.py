@@ -35,19 +35,21 @@ class Server:
 # --------------------------------------------------------------
 
     def connect(self):
-        print(f"Server listening on port {self.port}...")
+        #print(f"Server listening on port {self.port}...")
         self.socket.bind(self.address)
 
 # --------------------------------------------------------------
 
-    def receiveMessage(self):
+    def receive_message(self):
         multipart_message = self.socket.recv_multipart()
-        print("Raw message from broker | ", multipart_message)
+        #print("Raw message from broker | ", multipart_message)
         client_id, message = multipart_message[0], multipart_message[1]
         message = json.loads(message.decode('utf-8'))
+        print('RECEIVED')
         return client_id, message
 
-    def sendMessage(self, client_id, message):
+    def send_message(self, client_id, message):
+        print('SENT')
         self.socket.send_multipart([client_id, json.dumps(message).encode('utf-8')])
 
 # --------------------------------------------------------------
@@ -55,8 +57,8 @@ class Server:
     def run(self):
         self.connect()
         while True:
-            print("Waiting for message from broker...")
-            client_id, request = self.receiveMessage()
+            #print("Waiting for message from broker...")
+            client_id, request = self.receive_message()
             self.process_request(request, client_id)
 
     def process_request(self, request, client_id):
@@ -73,7 +75,7 @@ class Server:
 
     def send_pulse(self):
         response = {'status': 'OK'}
-        self.sendMessage(b"", response)
+        self.send_message(b"", response)
 
     def get_shopping_list(self, request, client_id):
         shopping_list_id = request['id']
@@ -83,18 +85,20 @@ class Server:
         else:
             items = self.database.get_items(shopping_list_id)
             response = {'action': 'get_shopping_list', 'id': shopping_list[0], 'name': shopping_list[1], 'items': items}
-        self.sendMessage(client_id, response)
+        self.send_message(client_id, response)
 
     def process_crdts(self, request, client_id):
-        crdt = ListsCRDT.from_json(request)
-        self.lists_crdt.merge(crdt)
-        response = {'action': 'crdts', 'crdt': self.lists_crdt.to_json()}
-        self.sendMessage(client_id, response)
-        self.update_db_lists()
+        response = {'status': 'OK'}
+        self.send_message(client_id, response)
+        #crdt = ListsCRDT.from_json(request)
+        #self.lists_crdt.merge(crdt)
+        #response = {'action': 'crdts', 'crdt': self.lists_crdt.to_json()}
+        #self.send_message(client_id, response)
+        #self.update_db_lists()
 
     def default_response(self, client_id):
         response = {'status': 'OK'}
-        self.sendMessage(client_id, response)
+        self.send_message(client_id, response)
 
 # --------------------------------------------------------------
 
