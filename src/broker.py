@@ -85,11 +85,14 @@ class Broker:
     def search_shopping_list(self, id, client_id):
         server = MultiServer.get_server(id)
         self.backend_socket.connect(server.address)
-        time.sleep(2)
         message = {'action': 'get_shopping_list', 'id': id}
         self.send_message(self.backend_socket, client_id, message)
+        _, response = self.receive_message(self.backend_socket)
+        if not response:
+            print(f"\n[{server.port}] > No response")
         self.backend_socket.disconnect(server.address)
-
+        self.send_message(self.frontend_socket, client_id, response)
+        
 # --------------------------------------------------------------
 
     def crdts_to_servers(self, crdt_json, client_id):
@@ -107,13 +110,7 @@ class Broker:
                 responses.append(response)
                 self.backend_socket.disconnect(server.address)
                 time.sleep(1)
-        crdt = ListsCRDT()
-        for response in responses:
-            received_crdt = ListsCRDT.from_json(response)
-            crdt.merge(received_crdt)
-        crdt_json = crdt.to_json()
-        crdt_json['action'] = 'crdts'
-        self.crdts_to_client(crdt_json, client_id)
+        self.crdts_to_client(responses, client_id)
 
     def distribute_crdts(self, crdt_json):
         servers_info = {server: ListsCRDT() for server in MultiServer.servers}
@@ -127,7 +124,13 @@ class Broker:
 
 # --------------------------------------------------------------
 
-    def crdts_to_client(self, crdt_json, client_id):
+    def crdts_to_client(self, responses, client_id):
+        crdt = ListsCRDT()
+        for response in responses:
+            received_crdt = ListsCRDT.from_json(response)
+            crdt.merge(received_crdt)
+        crdt_json = crdt.to_json()
+        crdt_json['action'] = 'crdts'
         self.send_message(self.frontend_socket, client_id, crdt_json)
 
 # --------------------------------------------------------------

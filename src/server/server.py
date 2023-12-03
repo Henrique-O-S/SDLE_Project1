@@ -79,10 +79,10 @@ class Server:
         shopping_list_id = request['id']
         shopping_list = self.database.get_shopping_list(shopping_list_id)
         if shopping_list == None:
-            response = {'action': 'get_shopping_list', 'message': 'Shopping list not found'}
+            response = {'status': 'ERROR', 'action': 'get_shopping_list'}
         else:
-            items = self.database.get_items(shopping_list_id)
-            response = {'action': 'get_shopping_list', 'id': shopping_list[0], 'name': shopping_list[1], 'items': items}
+            #items = self.database.get_items(shopping_list_id)
+            response = {'status': 'OK', 'action': 'get_shopping_list', 'id': shopping_list[0], 'name': shopping_list[1]}
         self.send_message(client_id, response)
 
     def process_crdts(self, crdt, client_id):

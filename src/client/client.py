@@ -56,8 +56,9 @@ class Client:
             data = self.send_request_receive_reply(message)
             if data['status'] == 'OK':
                 self.database.add_shopping_list(data['id'], data['name'])
-                for item in data['items']:
-                    self.database.add_item(item['name'], item['quantity'], data['id'])
+                #for item in data['items']:
+                #    self.database.add_item(item['name'], item['quantity'], data['id'])
+                shopping_list = self.database.get_shopping_list(id)
         return shopping_list
 
     def add_shopping_list(self, name):
