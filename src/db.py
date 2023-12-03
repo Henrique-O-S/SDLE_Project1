@@ -42,7 +42,7 @@ class ArmazonDB:
             return self.cursor.lastrowid
  
     def get_shopping_list(self, shopping_list_id):
-        self.cursor.execute('SELECT * FROM shopping_lists WHERE id = ? AND removed = ?', (shopping_list_id, 0))
+        self.cursor.execute('SELECT * FROM shopping_lists WHERE id = ?', (shopping_list_id,))
         return self.cursor.fetchone()
 
     def get_shopping_lists(self):

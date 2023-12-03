@@ -15,8 +15,6 @@ class Server:
         self.address = f"tcp://127.0.0.1:{self.port}"
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
-        self.database = ArmazonDB("server/databases/" + self.name)
-        self.load_crdts()
 
 # --------------------------------------------------------------
 
@@ -55,6 +53,8 @@ class Server:
 # --------------------------------------------------------------
 
     def run(self):
+        self.database = ArmazonDB("server/databases/" + self.name)
+        self.load_crdts()
         self.connect()
         while True:
             #print("Waiting for message from broker...")
@@ -67,7 +67,8 @@ class Server:
         elif request['action'] == 'get_shopping_list':
             self.get_shopping_list(request, client_id)
         elif request['action'] == 'crdts':
-            self.process_crdts(request, client_id)
+            crdt = ListsCRDT.from_json(request)
+            self.process_crdts(crdt, client_id)
         else:
             self.default_response(client_id)
         
@@ -87,14 +88,12 @@ class Server:
             response = {'action': 'get_shopping_list', 'id': shopping_list[0], 'name': shopping_list[1], 'items': items}
         self.send_message(client_id, response)
 
-    def process_crdts(self, request, client_id):
-        response = {'status': 'OK'}
-        self.send_message(client_id, response)
-        #crdt = ListsCRDT.from_json(request)
-        #self.lists_crdt.merge(crdt)
-        #response = {'action': 'crdts', 'crdt': self.lists_crdt.to_json()}
-        #self.send_message(client_id, response)
-        #self.update_db_lists()
+    def process_crdts(self, crdt, client_id):
+        self.lists_crdt.merge(crdt)
+        crdt_json = self.lists_crdt.to_json()
+        crdt_json['action'] = 'crdts'
+        self.update_db_lists()
+        self.send_message(client_id, crdt_json)
 
     def default_response(self, client_id):
         response = {'status': 'OK'}
@@ -104,9 +103,8 @@ class Server:
 
     def update_db_lists(self):
         for element in self.lists_crdt.add_set:
-            shopping_list = self.database.get_shopping_list(element[0])
-            if shopping_list == None:
-                self.database.add_shopping_list(element[0], element[1])
+            if self.database.get_shopping_list(element[0]) == None:
+                self.database.add_shopping_list(str(element[0]), str(element[1]))
         for element in self.lists_crdt.remove_set:
             self.database.delete_shopping_list(element[0])
 

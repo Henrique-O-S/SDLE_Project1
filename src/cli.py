@@ -1,3 +1,3 @@
 from client.client import Client
 
-client1 = Client('client1')
+client = Client('client1')

@@ -102,13 +102,15 @@ class Client:
 
     def refresh_shopping_lists(self):
         backend_lists_crdt = self.lists_to_broker()
-        #self.lists_crdt.removal_merge(backend_lists_crdt)
-        #self.update_db_lists()
+        self.lists_crdt.removal_merge(backend_lists_crdt)
+        self.update_db_lists()
 
     def lists_to_broker(self):
         backend_lists_crdt = ListsCRDT()
-        message = {'action': 'crdts', 'crdt': self.lists_crdt.to_json()}
-        response = self.send_request_receive_reply(message)
+        crdt_json = self.lists_crdt.to_json()
+        crdt_json['action'] = 'crdts'
+        response = self.send_request_receive_reply(crdt_json)
+        print(response)
         return backend_lists_crdt
     
     def update_db_lists(self):

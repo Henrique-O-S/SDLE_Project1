@@ -82,7 +82,7 @@ class Broker:
             if message['action'] == 'get_shopping_list':
                 self.search_shopping_list(message['id'], client_id)
             elif message['action'] == 'crdts':
-                self.crdts_to_servers(message['crdt'], client_id)
+                self.crdts_to_servers(message, client_id)
 
 # --------------------------------------------------------------
 
@@ -119,8 +119,13 @@ class Broker:
                 # Disconnect from the server
                 self.backend_socket.disconnect(server.address)
                 time.sleep(1)
-        print(responses)
-        self.crdts_to_client(client_id)
+        crdt = ListsCRDT()
+        for response in responses:
+            received_crdt = ListsCRDT.from_json(response)
+            crdt.merge(received_crdt)
+        crdt_json = crdt.to_json()
+        crdt_json['action'] = 'crdts'
+        self.crdts_to_client(crdt_json, client_id)
 
     def distribute_crdts(self, crdt_json):
         servers_info = {server: ListsCRDT() for server in MultiServer.servers}
@@ -136,9 +141,7 @@ class Broker:
 
 # --------------------------------------------------------------
 
-    def crdts_to_client(self, client_id):
-        print("BOASSS")
-        crdt_json = {'status': 'OK'}
+    def crdts_to_client(self, crdt_json, client_id):
         self.send_message(self.frontend_socket, client_id, crdt_json)
 
 # --------------------------------------------------------------
