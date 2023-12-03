@@ -65,10 +65,10 @@ class Broker:
 
     def run(self):
         while True:
-            current_time = time.time()
-            if current_time - self.last_pulse_check >= self.pulse_check_interval:
-                self.pulse_check_to_servers()
-                self.last_pulse_check = current_time
+            #current_time = time.time()
+            #if current_time - self.last_pulse_check >= self.pulse_check_interval:
+            #    self.pulse_check_to_servers()
+            #    self.last_pulse_check = current_time
             self.socks = dict(self.poller.poll(1000))
             self.frontend_polling()
 
@@ -100,7 +100,6 @@ class Broker:
                 self.backend_socket.connect(server.address)
                 crdt_json = crdt.to_json()
                 crdt_json['action'] = 'crdts'
-                print('SENT ', crdt_json)
                 self.send_message(self.backend_socket, client_id, crdt_json)
                 _, response = self.receive_message(self.backend_socket)
                 if not response:
@@ -123,7 +122,7 @@ class Broker:
             servers_info[server].add((element[0], element[1]))
         for element in crdt_json['remove_set']:
             server = MultiServer.get_server(element[0])
-            servers_info[server].add((element[0], element[1]))
+            servers_info[server].remove((element[0], element[1]))
         return servers_info
 
 # --------------------------------------------------------------
