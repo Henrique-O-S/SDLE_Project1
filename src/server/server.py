@@ -2,6 +2,8 @@
 
 import zmq
 import json
+import sys
+sys.path.append('../')
 from db import ArmazonDB
 from crdts import ListsCRDT, ItemsCRDT
 
@@ -106,3 +108,9 @@ class Server:
             self.database.delete_shopping_list(element[0])
 
 # --------------------------------------------------------------
+
+    def mark_as_offline(self):
+        self.online = False
+    
+    def mark_as_online(self):
+        self.online = True
