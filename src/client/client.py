@@ -41,12 +41,10 @@ class Client:
         self.socket.connect(f"tcp://127.0.0.1:{self.port}")
 
     def send_request_receive_reply(self, message):
-        print('SENT')
         self.socket.send_multipart([json.dumps(message).encode('utf-8')])
         multipart_message = self.socket.recv_multipart()
-        #print("REQ // Raw message from broker | ", multipart_message)
+        print("\n[BROKER] > ", multipart_message)
         response = json.loads(multipart_message[0].decode('utf-8'))
-        print('RECEIVED')
         return response
 
 # --------------------------------------------------------------
@@ -110,7 +108,6 @@ class Client:
         crdt_json = self.lists_crdt.to_json()
         crdt_json['action'] = 'crdts'
         response = self.send_request_receive_reply(crdt_json)
-        print(response)
         return backend_lists_crdt
     
     def update_db_lists(self):

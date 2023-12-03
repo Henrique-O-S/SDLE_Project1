@@ -33,21 +33,19 @@ class Server:
 # --------------------------------------------------------------
 
     def connect(self):
-        #print(f"Server listening on port {self.port}...")
         self.socket.bind(self.address)
+        print(f"[INFO] > Listening on port {self.port}")
 
 # --------------------------------------------------------------
 
     def receive_message(self):
         multipart_message = self.socket.recv_multipart()
-        #print("Raw message from broker | ", multipart_message)
+        print(f"\n[{self.port}][BROKER] > {multipart_message}")
         client_id, message = multipart_message[0], multipart_message[1]
         message = json.loads(message.decode('utf-8'))
-        print('RECEIVED')
         return client_id, message
 
     def send_message(self, client_id, message):
-        print('SENT')
         self.socket.send_multipart([client_id, json.dumps(message).encode('utf-8')])
 
 # --------------------------------------------------------------
@@ -57,7 +55,6 @@ class Server:
         self.load_crdts()
         self.connect()
         while True:
-            #print("Waiting for message from broker...")
             client_id, request = self.receive_message()
             self.process_request(request, client_id)
 
@@ -104,7 +101,7 @@ class Server:
     def update_db_lists(self):
         for element in self.lists_crdt.add_set:
             if self.database.get_shopping_list(element[0]) == None:
-                self.database.add_shopping_list(str(element[0]), str(element[1]))
+                self.database.add_shopping_list(element[0], element[1])
         for element in self.lists_crdt.remove_set:
             self.database.delete_shopping_list(element[0])
 
