@@ -34,13 +34,34 @@ class ConsistentHashRing:
         elif self.hashing_option == 2:
             return int(hashlib.sha512(key.encode()).hexdigest(), 16)
 
-    def get_node(self, key):
+    def get_nodes(self, key):
         if not self.ring:
             return None
 
         hashed_key = self._hash_key(key)
         index = bisect.bisect(self.ring, (hashed_key,)) % len(self.ring)
-        return self.ring[index][1]
+
+        # Retrieve the server responsible for the given key
+        primary_server = self.ring[index][1]
+
+        found_addresses = [primary_server.address]
+        ret = []
+
+        for node in self.ring[index+1:]:
+            print("now in ", node[1].address)
+            if node[1].address not in found_addresses:
+                found_addresses.append(node[1].address)
+                ret.append(node[1])
+                print("added ", node[1].address)
+            if len(ret) == 2:
+                break
+
+
+        return {'primary': primary_server, 'backup': ret}
+
+
+
+
 
     def plot_ring(self):
         num_nodes = len(self.ring)

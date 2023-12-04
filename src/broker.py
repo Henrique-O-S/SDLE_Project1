@@ -57,6 +57,7 @@ class Broker:
 
     def send_message_server_receive_reply(self, servers, client_id, message):
         for server in servers:
+            print("TRYING SERVER", server.address)
             if server.online:
                 print("SERVER ONLINE", server.address)
                 self.backend_socket.connect(server.address)
@@ -68,10 +69,11 @@ class Broker:
                         print("Raw message from SERVER | ", multipart_message)
                         client_id, message = multipart_message[1], multipart_message[2]
                         message = json.loads(message.decode('utf-8'))
+                        server.mark_as_online()
                         return client_id, message
                     else:
+                        server.mark_as_offline()
                         print(f"No message received within {self.message_receive_timeout} seconds from SERVER")
-                        return None, None
                 except zmq.ZMQError as e:
                     print(f"Error receiving message from SERVER: {e}")
                     return None, None
@@ -114,11 +116,14 @@ class Broker:
     def crdts_to_servers(self, crdt_json, client_id):
         servers_info = self.distribute_crdts(crdt_json)
         responses = []
-        for server, crdt in servers_info.items():
+        for server, [crdt, backup_servers] in servers_info.items():
             if crdt.add_set or crdt.remove_set:
                 message = crdt.to_json()
                 message['action'] = 'crdts'
-                _, response = self.send_message_server_receive_reply([server], client_id, message)
+                servers = [server] + backup_servers
+                for a in servers:
+                    print("IT WILL TRY ON ", a.address)
+                _, response = self.send_message_server_receive_reply(servers, client_id, message)
                 if not response:
                     print(f"\n[{server.port}] > No response")
                 responses.append(response)
@@ -132,13 +137,15 @@ class Broker:
         self.crdts_to_client(crdt_json, client_id)
 
     def distribute_crdts(self, crdt_json):
-        servers_info = {server: ListsCRDT() for server in MultiServer.servers}
+        servers_info = {server: [ListsCRDT(),[]] for server in MultiServer.servers}
         for element in crdt_json['add_set']:
-            server = MultiServer.get_server(element[0])
-            servers_info[server].add((element[0], element[1]))
+            server = MultiServer.get_servers(element[0])
+            servers_info[server['primary']][0].add((element[0], element[1]))
+            servers_info[server['primary']][1] = server['backup']
         for element in crdt_json['remove_set']:
-            server = MultiServer.get_server(element[0])
-            servers_info[server].add((element[0], element[1]))
+            server = MultiServer.get_servers(element[0])
+            servers_info[server['primary']][0].remove((element[0], element[1]))
+            servers_info[server['primary']][1] = server['backup']
         return servers_info
 
 # --------------------------------------------------------------

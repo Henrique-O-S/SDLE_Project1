@@ -25,7 +25,7 @@ class MultiServer:
             executor.map(MultiServer.run_server, MultiServer.servers)
     
     @staticmethod
-    def get_server(key):
-        return MultiServer.ring.get_node(key)
+    def get_servers(key):
+        return MultiServer.ring.get_nodes(key)
 
 # --------------------------------------------------------------
