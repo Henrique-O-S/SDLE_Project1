@@ -120,6 +120,9 @@ class Broker:
         for element in crdt_json['remove_set']:
             server = MultiServer.get_server(element[0])
             servers_info[server].remove((element[0], element[1]))
+        for list_key, items_data in crdt_json['items'].items():
+            server = MultiServer.get_server(list_key)
+            servers_info[server].items_crdt[list_key] = ItemsCRDT.from_json(items_data)
         return servers_info
 
 # --------------------------------------------------------------
