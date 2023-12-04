@@ -135,7 +135,6 @@ class Broker:
                 if not response:
                     print(f"\n[{server.port}] > No response")
                 responses.append(response)
-                time.sleep(1)
         crdt = ListsCRDT()
         for response in responses:
             received_crdt = ListsCRDT.from_json(response)
