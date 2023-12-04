@@ -5,10 +5,14 @@ import matplotlib.pyplot as plt
 import uuid
 
 class ConsistentHashRing:
-    def __init__(self, servers, virtual_nodes=1, plot=False, test=False, hashing_option=0):
+    def __init__(self, servers, virtual_nodes=1, plot=False, test=False, hashing_option=2, replication_factor=2):
         self.servers = servers
         self.virtual_nodes = virtual_nodes
         self.hashing_option = hashing_option
+        self.replication_factor = replication_factor
+        if self.replication_factor > len(servers) - 1:
+            print("Replication factor cannot be greater than the number of servers. Setting replication factor to", len(servers) - 1)
+            self.replication_factor = len(servers) - 1
         self.ring = self._build_ring()
         if plot:
             self.plot_ring()
@@ -55,7 +59,7 @@ class ConsistentHashRing:
                 found_addresses.append(node[1].address)
                 backup.append(node[1])
                 print("added ", node[1].address)
-            if len(backup) == 2:
+            if len(backup) == self.replication_factor:
                 break
 
 
