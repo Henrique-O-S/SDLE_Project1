@@ -109,7 +109,7 @@ class Broker:
 # --------------------------------------------------------------
 
     def search_shopping_list(self, id, client_id):
-        server = MultiServer.get_server(id)
+        server = MultiServer.get_servers(id)
         servers = [server['primary']] + server['backup']
         message = {'action': 'get_shopping_list', 'id': id}
         client_id, response = self.send_message_server_receive_reply(servers, client_id, message)
