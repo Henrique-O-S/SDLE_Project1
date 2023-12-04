@@ -1,4 +1,4 @@
-from broker import Broker
+from broker.multi_broker import MultiBroker
 
-broker = Broker()
-broker.run()
+MultiBroker.start_brokers()
+print("All brokers terminated.")

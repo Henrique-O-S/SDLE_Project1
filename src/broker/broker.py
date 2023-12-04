@@ -9,15 +9,14 @@ from crdts import ListsCRDT, ItemsCRDT
 # --------------------------------------------------------------
 
 class Broker:
-    def __init__(self, frontend_port=5559, backend_port=5560, pulse_check_interval=5, message_receive_timeout=2):
+    def __init__(self, name, frontend_port=5559, backend_port=5560, pulse_check_interval=5, message_receive_timeout=2):
+        self.name = name
         self.pulseEnabled = True
         self.pulse_check_interval = pulse_check_interval
         self.message_receive_timeout = message_receive_timeout
         self.last_pulse_check = time.time()
         self.frontend_port = frontend_port
         self.backend_port = backend_port
-        self.connect()
-        self.setup_poller()
 
 # --------------------------------------------------------------
 
@@ -27,6 +26,7 @@ class Broker:
         self.backend_socket = self.context.socket(zmq.DEALER)
         self.frontend_socket.bind(f"tcp://127.0.0.1:{self.frontend_port}")
         self.backend_socket.bind(f"tcp://127.0.0.1:{self.backend_port}")
+        print("broker connected", self.frontend_port, self.backend_port, self.name)
 
     def setup_poller(self):
         self.poller = zmq.Poller()
@@ -40,15 +40,15 @@ class Broker:
             sockets = dict(self.poller.poll(self.message_receive_timeout * 1000))
             if self.frontend_socket in sockets and sockets[self.frontend_socket] == zmq.POLLIN:
                 multipart_message = self.frontend_socket.recv_multipart()
-                print(f"\n[CLIENT] > {multipart_message}")
+                print(f"\n [CLIENT] > [{self.name}]: {multipart_message}")
                 client_id, message = multipart_message[0], multipart_message[2]
                 message = json.loads(message.decode('utf-8'))
                 return client_id, message
             else:
-                print(f"\n[ERROR] > No message received within {self.message_receive_timeout} seconds from [CLIENT]")
+                print(f"\n[ERROR] > [{self.name}]: No message received within {self.message_receive_timeout} seconds from [CLIENT]")
                 return None, None
         except zmq.ZMQError as e:
-            print(f"\n[ERROR] > Error receiving message from CLIENT: {e}")
+            print(f"\n[ERROR] > [{self.name}]: Error receiving message from CLIENT: {e}")
             return None, None
 
     def send_message_client(self, client_id, message):
@@ -57,7 +57,7 @@ class Broker:
 
     def send_message_server_receive_reply(self, servers, client_id, message, pulse=False):
         for server in servers:
-            print("TRYING SERVER", server.address)
+            print(f"\n [{self.name}]: TRYING SERVER {server.address}")
             if not pulse and not server.online:
                 continue
             print(server.address, server.online)
@@ -67,9 +67,7 @@ class Broker:
                 sockets = dict(self.poller.poll(self.message_receive_timeout * 1000))
                 if self.backend_socket in sockets and sockets[self.backend_socket] == zmq.POLLIN:
                     multipart_message = self.backend_socket.recv_multipart()
-                    print("Raw message from SERVER | ", multipart_message)
-
-
+                    print(f"\n [SERVER] > [{self.name}]: {multipart_message}")
 
                     self.backend_socket.disconnect(server.address)
 
@@ -80,12 +78,12 @@ class Broker:
                 else:
                     server.mark_as_offline()
                     self.backend_socket.disconnect(server.address)
-                    print(server.address, "IS OFFLINE")
-                    print(f"No message received within {self.message_receive_timeout} seconds from SERVER")
+                    print(f"\n [{self.name}]: {server.address} IS OFFLINE")
+                    print(f"\n[ERROR] > [{self.name}]: No message received within {self.message_receive_timeout} seconds from [SERVER]")
             except zmq.ZMQError as e:
-                print(f"Error receiving message from SERVER: {e}")
+                print(f"\n[ERROR] > [{self.name}]: Error receiving message from SERVER: {e}")
                 return None, None
-        print("NO SERVER ONLINE")
+        print(f"\n [{self.name}]: NO SERVER ONLINE")
         return None, None
 
         
@@ -93,6 +91,8 @@ class Broker:
 # --------------------------------------------------------------
 
     def run(self):
+        self.connect()
+        self.setup_poller()
         while True:
             current_time = time.time()
             if self.pulseEnabled and current_time - self.last_pulse_check >= self.pulse_check_interval:
@@ -129,11 +129,9 @@ class Broker:
                 message = crdt.to_json()
                 message['action'] = 'crdts'
                 servers = [server] + backup_servers
-                for a in servers:
-                    print("IT WILL TRY ON ", a.address)
+                for server_el in servers:
+                    print(f"\n [{self.name}]: IT WILL TRY ON {server_el.address}")
                 _, response = self.send_message_server_receive_reply(servers, client_id, message)
-                if not response:
-                    print(f"\n[{server.port}] > No response")
                 responses.append(response)
         crdt = ListsCRDT()
         for response in responses:
@@ -168,8 +166,7 @@ class Broker:
             _, response = self.send_message_server_receive_reply([server], b"", message, pulse=True)
             if response:
                 if response['status'] == 'OK':
-                    print(f'\n[{server.port}] > Pulse')
+                    print(f'\n[{server.port}] > [{self.name}] Pulse')
             else:
-                print(f'\n[{server.port}] > No pulse')
-
+                print(f'\n[{server.port}] > [{self.name}] No Pulse')
 # --------------------------------------------------------------
