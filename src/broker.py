@@ -10,7 +10,7 @@ from crdts import ListsCRDT, ItemsCRDT
 
 class Broker:
     def __init__(self, frontend_port=5559, backend_port=5560, pulse_check_interval=5, message_receive_timeout=2):
-        self.pulseEnabled = False
+        self.pulseEnabled = True
         self.pulse_check_interval = pulse_check_interval
         self.message_receive_timeout = message_receive_timeout
         self.last_pulse_check = time.time()
@@ -55,28 +55,36 @@ class Broker:
         self.frontend_socket.send_multipart([client_id, b"", json.dumps(message).encode('utf-8')])
 
 
-    def send_message_server_receive_reply(self, servers, client_id, message):
+    def send_message_server_receive_reply(self, servers, client_id, message, pulse=False):
         for server in servers:
             print("TRYING SERVER", server.address)
-            if server.online:
-                print("SERVER ONLINE", server.address)
-                self.backend_socket.connect(server.address)
-                self.backend_socket.send_multipart([b"", client_id, json.dumps(message).encode('utf-8')])
-                try:
-                    sockets = dict(self.poller.poll(self.message_receive_timeout * 1000))
-                    if self.backend_socket in sockets and sockets[self.backend_socket] == zmq.POLLIN:
-                        multipart_message = self.backend_socket.recv_multipart()
-                        print("Raw message from SERVER | ", multipart_message)
-                        client_id, message = multipart_message[1], multipart_message[2]
-                        message = json.loads(message.decode('utf-8'))
-                        server.mark_as_online()
-                        return client_id, message
-                    else:
-                        server.mark_as_offline()
-                        print(f"No message received within {self.message_receive_timeout} seconds from SERVER")
-                except zmq.ZMQError as e:
-                    print(f"Error receiving message from SERVER: {e}")
-                    return None, None
+            if not pulse and not server.online:
+                continue
+            print(server.address, server.online)
+            self.backend_socket.connect(server.address)
+            self.backend_socket.send_multipart([b"", client_id, json.dumps(message).encode('utf-8')])
+            try:
+                sockets = dict(self.poller.poll(self.message_receive_timeout * 1000))
+                if self.backend_socket in sockets and sockets[self.backend_socket] == zmq.POLLIN:
+                    multipart_message = self.backend_socket.recv_multipart()
+                    print("Raw message from SERVER | ", multipart_message)
+
+
+
+                    self.backend_socket.disconnect(server.address)
+
+                    client_id, message = multipart_message[1], multipart_message[2]
+                    message = json.loads(message.decode('utf-8'))
+                    server.mark_as_online()
+                    return client_id, message
+                else:
+                    server.mark_as_offline()
+                    self.backend_socket.disconnect(server.address)
+                    print(server.address, "IS OFFLINE")
+                    print(f"No message received within {self.message_receive_timeout} seconds from SERVER")
+            except zmq.ZMQError as e:
+                print(f"Error receiving message from SERVER: {e}")
+                return None, None
         print("NO SERVER ONLINE")
         return None, None
 
@@ -158,13 +166,11 @@ class Broker:
     def pulse_check_to_servers(self):
         for server in MultiServer.servers:
             message = {'action': 'r_u_there'}
-            _, response = self.send_message_server_receive_reply([server], b"", message)
+            _, response = self.send_message_server_receive_reply([server], b"", message, pulse=True)
             if response:
                 if response['status'] == 'OK':
-                    server.mark_as_online()
                     print(f'\n[{server.port}] > Pulse')
             else:
-                server.mark_as_offline()
                 print(f'\n[{server.port}] > No pulse')
 
 # --------------------------------------------------------------

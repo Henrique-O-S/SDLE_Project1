@@ -54,11 +54,11 @@ class ConsistentHashRing:
         for index in range(index+1, len(self.ring) * 3):
             index = index % len(self.ring)
             node = self.ring[index]
-            print("now in ", node[1].address)
+            #print("now in ", node[1].address)
             if node[1].address not in found_addresses:
                 found_addresses.append(node[1].address)
                 backup.append(node[1])
-                print("added ", node[1].address)
+                #print("added ", node[1].address)
             if len(backup) == self.replication_factor:
                 break
 
