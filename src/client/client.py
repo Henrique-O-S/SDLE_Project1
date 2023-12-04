@@ -11,7 +11,7 @@ from client.gui import ArmazonGUI
 # --------------------------------------------------------------
 
 class Client:
-    def __init__(self, name = 'client', port = 5559):
+    def __init__(self, name = 'client', port = 5500):
         self.name = name
         self.port = port
         self.database = ArmazonDB("client/databases/" + self.name)
