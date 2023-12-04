@@ -1,4 +1,5 @@
-from client.client import Client
+from client.multi_client import MultiClient
 
-client1 = Client('client1')
-#client2 = Client('client2')
+if __name__ == '__main__':
+    MultiClient.start_clients()
+    print("All clients terminated.")

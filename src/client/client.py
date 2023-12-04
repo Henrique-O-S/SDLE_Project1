@@ -14,12 +14,15 @@ class Client:
     def __init__(self, name = 'client', port = 5500):
         self.name = name
         self.port = port
+        
+
+    def run(self):
         self.database = ArmazonDB("client/databases/" + self.name)
         self.load_crdts()
         self.connect()
         self.gui = ArmazonGUI(self)
-        
-# --------------------------------------------------------------
+# -------------------------------------------------------------
+
 
     def load_crdts(self):
         self.lists_crdt = ListsCRDT()
