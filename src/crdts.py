@@ -41,9 +41,6 @@ class ListsCRDT:
                 self.items_crdt[list_id].merge(items_crdt)
             else:
                 self.items_crdt[list_id] = items_crdt
-
-    def value(self):
-        return self.add_set - self.remove_set
     
     def to_json(self):
         items_crdt_json = {list_key: self.items_crdt[list_key].to_json() for list_key in self.items_crdt}
@@ -104,17 +101,10 @@ class ItemsCRDT:
                     self.remove_set[item] = (quantity, timestamp)
             else:
                 self.remove_set[item] = (quantity, timestamp)
-
-    def value(self):
-        valid_elements = set()
         for item, (quantity, timestamp) in self.add_set.items():
-            timestamp = datetime.fromisoformat(str(timestamp))
             if item in self.remove_set:
-                if self.remove_set[item][1].isoformat() < timestamp.isoformat(): 
-                    valid_elements.add((item, quantity))
-            else:
-                valid_elements.add((item, quantity))
-        return valid_elements
+                if self.remove_set[item][1].isoformat() < timestamp.isoformat():
+                    del self.remove_set[item]
     
     def to_json(self):
         return {

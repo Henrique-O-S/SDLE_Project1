@@ -3,7 +3,6 @@
 import uuid
 import zmq
 import json
-from datetime import datetime
 from db import ArmazonDB
 from crdts import ListsCRDT
 from client.gui import ArmazonGUI
@@ -57,8 +56,10 @@ class Client:
             data = self.send_request_receive_reply(message)
             if data['status'] == 'OK':
                 self.database.add_shopping_list(data['id'], data['name'])
+                self.lists_crdt.add((id, data['name']))
                 for item in data['items']:
                     self.database.add_item(item['name'], item['quantity'], data['id'], item['timestamp'])
+                    self.lists_crdt.add_item(data['id'], (item['name'], item['quantity']), item['timestamp'])
                 shopping_list = self.database.get_shopping_list(id)
         return shopping_list
 
@@ -107,13 +108,13 @@ class Client:
             self.update_db_items(element[0])
         
     def update_db_items(self, shopping_list_id):
-        for element in self.lists_crdt.items_crdt[shopping_list_id].add_set:
-            item = self.database.get_item(shopping_list_id, element[0])
-            if item == None:
-                self.database.add_item(element[0], element[1], shopping_list_id)
+        for item_name, (quantity, _) in self.lists_crdt.items_crdt.get(shopping_list_id).add_set.items():
+            existing_item = self.database.get_item(shopping_list_id, item_name)
+            if existing_item is None:
+                self.database.add_item(item_name, quantity, shopping_list_id)
             else:
-                self.database.update_item(element[0], element[1], shopping_list_id)
-        for element in self.lists_crdt.items_crdt[shopping_list_id].remove_set:
-            self.database.delete_item(element[0], shopping_list_id)
+                self.database.update_item(item_name, quantity, shopping_list_id)
+        for item_name, _ in self.lists_crdt.items_crdt.get(shopping_list_id).remove_set.items():
+            self.database.delete_item(item_name, shopping_list_id)
 
 # --------------------------------------------------------------
