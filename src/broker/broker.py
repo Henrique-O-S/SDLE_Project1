@@ -136,7 +136,7 @@ class Broker:
         for element in crdt_json['add_set']:
             server = MultiServer.get_servers(element[0])
             servers_info[server['primary']][0].add((element[0], element[1]))
-            # crdt_json example: {'add_set': [('id', 'name')], 'remove_set': [], 'items': [{'id': {'add_set': [('name', 'quantity', timestamp)], 'remove_set': []}}]}
+            # crdt_json example: {'add_set': [('id', 'name')], 'remove_set': [], 'items': [{'id': {'add_set': [('name', ('quantity', timestamp))], 'remove_set': []}}]}
             if element[0] in crdt_json['items']:
                 for item in crdt_json['items'][element[0]]['add_set']:
                     servers_info[server['primary']][0].add_item(element[0], (item[0], item[1]), item[2])
