@@ -17,8 +17,6 @@ class Broker:
         self.last_pulse_check = time.time()
         self.frontend_port = frontend_port
         self.backend_port = backend_port
-        self.connect()
-        self.setup_poller()
 
 # --------------------------------------------------------------
 
@@ -93,6 +91,8 @@ class Broker:
 # --------------------------------------------------------------
 
     def run(self):
+        self.connect()
+        self.setup_poller()
         while True:
             current_time = time.time()
             if self.pulseEnabled and current_time - self.last_pulse_check >= self.pulse_check_interval:

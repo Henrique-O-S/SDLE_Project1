@@ -11,9 +11,9 @@ from client.gui import ArmazonGUI
 # --------------------------------------------------------------
 
 class Client:
-    def __init__(self, name = 'client', port = 5500):
+    def __init__(self, name = 'client', broker_port = 5500):
         self.name = name
-        self.port = port
+        self.broker_port = broker_port
         
 
     def run(self):
@@ -41,7 +41,7 @@ class Client:
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
         self.socket.setsockopt(zmq.IDENTITY, str(self.name).encode('utf-8'))
-        self.socket.connect(f"tcp://127.0.0.1:{self.port}")
+        self.socket.connect(f"tcp://127.0.0.1:{self.broker_port}")
 
     def send_request_receive_reply(self, message):
         self.socket.send_multipart([json.dumps(message).encode('utf-8')])
