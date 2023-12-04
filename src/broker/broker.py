@@ -11,7 +11,7 @@ from crdts import ListsCRDT, ItemsCRDT
 class Broker:
     def __init__(self, name, frontend_port=5559, backend_port=5560, pulse_check_interval=5, message_receive_timeout=2):
         self.name = name
-        self.pulseEnabled = True
+        self.pulse_enabled = True
         self.pulse_check_interval = pulse_check_interval
         self.message_receive_timeout = message_receive_timeout
         self.last_pulse_check = time.time()
@@ -26,7 +26,7 @@ class Broker:
         self.backend_socket = self.context.socket(zmq.DEALER)
         self.frontend_socket.bind(f"tcp://127.0.0.1:{self.frontend_port}")
         self.backend_socket.bind(f"tcp://127.0.0.1:{self.backend_port}")
-        print("broker connected", self.frontend_port, self.backend_port, self.name)
+        print("[INFO] > Broker connected", self.frontend_port, self.backend_port, self.name)
 
     def setup_poller(self):
         self.poller = zmq.Poller()
@@ -54,10 +54,9 @@ class Broker:
     def send_message_client(self, client_id, message):
         self.frontend_socket.send_multipart([client_id, b"", json.dumps(message).encode('utf-8')])
 
-
     def send_message_server_receive_reply(self, servers, client_id, message, pulse=False):
         for server in servers:
-            print(f"\n [{self.name}]: TRYING SERVER {server.address}")
+            print(f"\n [{self.name}]: Trying server {server.address}")
             if not pulse and not server.online:
                 continue
             print(server.address, server.online)
@@ -78,15 +77,13 @@ class Broker:
                 else:
                     server.mark_as_offline()
                     self.backend_socket.disconnect(server.address)
-                    print(f"\n [{self.name}]: {server.address} IS OFFLINE")
+                    print(f"\n [{self.name}]: {server.address} is offline")
                     print(f"\n[ERROR] > [{self.name}]: No message received within {self.message_receive_timeout} seconds from [SERVER]")
             except zmq.ZMQError as e:
                 print(f"\n[ERROR] > [{self.name}]: Error receiving message from SERVER: {e}")
                 return None, None
-        print(f"\n [{self.name}]: NO SERVER ONLINE")
+        print(f"\n [{self.name}]: No server online")
         return None, None
-
-        
 
 # --------------------------------------------------------------
 
@@ -95,7 +92,7 @@ class Broker:
         self.setup_poller()
         while True:
             current_time = time.time()
-            if self.pulseEnabled and current_time - self.last_pulse_check >= self.pulse_check_interval:
+            if self.pulse_enabled and current_time - self.last_pulse_check >= self.pulse_check_interval:
                 self.pulse_check_to_servers()
                 self.last_pulse_check = current_time
             self.socks = dict(self.poller.poll(1000))
@@ -111,13 +108,10 @@ class Broker:
 
 # --------------------------------------------------------------
 
-    """ def search_shopping_list(self, id, client_id):
+    def search_shopping_list(self, id, client_id):
         server = MultiServer.get_server(id)
-        self.backend_socket.connect(server.address)
-        time.sleep(2)
         message = {'action': 'get_shopping_list', 'id': id}
-        self.send_message(self.backend_socket, client_id, message)
-        self.backend_socket.disconnect(server.address) """
+        self.send_message_server_receive_reply([server], client_id, message)
 
 # --------------------------------------------------------------
 
@@ -130,16 +124,10 @@ class Broker:
                 message['action'] = 'crdts'
                 servers = [server] + backup_servers
                 for server_el in servers:
-                    print(f"\n [{self.name}]: IT WILL TRY ON {server_el.address}")
+                    print(f"\n [{self.name}]: It will try on {server_el.address}")
                 _, response = self.send_message_server_receive_reply(servers, client_id, message)
                 responses.append(response)
-        crdt = ListsCRDT()
-        for response in responses:
-            received_crdt = ListsCRDT.from_json(response)
-            crdt.merge(received_crdt)
-        crdt_json = crdt.to_json()
-        crdt_json['action'] = 'crdts'
-        self.crdts_to_client(crdt_json, client_id)
+        self.crdts_to_client(responses, client_id)
 
     def distribute_crdts(self, crdt_json):
         servers_info = {server: [ListsCRDT(),[]] for server in MultiServer.servers}
@@ -151,11 +139,21 @@ class Broker:
             server = MultiServer.get_servers(element[0])
             servers_info[server['primary']][0].remove((element[0], element[1]))
             servers_info[server['primary']][1] = server['backup']
+        for list_key, items_data in crdt_json['items'].items():
+            server = MultiServer.get_servers(list_key)
+            servers_info[server['primary']][0].items[list_key] = ItemsCRDT.from_json(items_data)
+            servers_info[server['primary']][1] = server['backup']	
         return servers_info
 
 # --------------------------------------------------------------
 
-    def crdts_to_client(self, crdt_json, client_id):
+    def crdts_to_client(self, responses, client_id):
+        crdt = ListsCRDT()
+        for response in responses:
+            received_crdt = ListsCRDT.from_json(response)
+            crdt.merge(received_crdt)
+        crdt_json = crdt.to_json()
+        crdt_json['action'] = 'crdts'
         self.send_message_client(client_id, crdt_json)
 
 # --------------------------------------------------------------
@@ -169,4 +167,5 @@ class Broker:
                     print(f'\n[{server.port}] > [{self.name}] Pulse')
             else:
                 print(f'\n[{server.port}] > [{self.name}] No Pulse')
+                
 # --------------------------------------------------------------

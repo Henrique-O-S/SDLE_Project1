@@ -5,7 +5,7 @@ import json
 import sys
 sys.path.append('../')
 from db import ArmazonDB
-from crdts import ListsCRDT, ItemsCRDT
+from crdts import ListsCRDT
 
 # --------------------------------------------------------------
 
@@ -22,12 +22,12 @@ class Server:
 
     def load_crdts(self):
         self.lists_crdt = ListsCRDT()
-        self.items_crdt = {}
         shopping_lists = self.database.get_shopping_lists()
         for shopping_list in shopping_lists:
             self.lists_crdt.add((shopping_list[0], shopping_list[1]))
-            #self.items_crdt[shopping_list[0]] = ItemsCRDT()
-            # to do
+            items = self.database.get_items(shopping_list[0])
+            for item in items:
+                self.lists_crdt.add_item(shopping_list[0], (item[1], item[2]), item[3])
         removed_lists = self.database.get_removed_lists()
         for removed_list in removed_lists:
             self.lists_crdt.remove((removed_list[0], removed_list[1]))
@@ -81,10 +81,12 @@ class Server:
         shopping_list_id = request['id']
         shopping_list = self.database.get_shopping_list(shopping_list_id)
         if shopping_list == None:
-            response = {'action': 'get_shopping_list', 'message': 'Shopping list not found'}
+            response = {'status': 'ERROR', 'action': 'get_shopping_list'}
         else:
-            items = self.database.get_items(shopping_list_id)
-            response = {'action': 'get_shopping_list', 'id': shopping_list[0], 'name': shopping_list[1], 'items': items}
+            response = {'status': 'OK', 'action': 'get_shopping_list', 'id': shopping_list[0], 'name': shopping_list[1], 'items': []}
+            items = self.database.get_items(shopping_list[0])
+            for item in items:
+                response['items'].append({'name': item[1], 'quantity': item[2], 'timestamp': item[3]})
         self.send_message(client_id, response)
 
     def process_crdts(self, crdt, client_id):
@@ -104,8 +106,19 @@ class Server:
         for element in self.lists_crdt.add_set:
             if self.database.get_shopping_list(element[0]) == None:
                 self.database.add_shopping_list(element[0], element[1])
+            self.update_db_items(element[0])
         for element in self.lists_crdt.remove_set:
             self.database.delete_shopping_list(element[0])
+
+    def update_db_items(self, shopping_list_id):
+        for item_name, (quantity, _) in self.lists_crdt.items_crdt.get(shopping_list_id).add_set.items():
+            existing_item = self.database.get_item(shopping_list_id, item_name)
+            if existing_item is None:
+                self.database.add_item(item_name, quantity, shopping_list_id)
+            else:
+                self.database.update_item(item_name, quantity, shopping_list_id)
+        for item_name, _ in self.lists_crdt.items_crdt.get(shopping_list_id).remove_set.items():
+            self.database.delete_item(item_name, shopping_list_id)
 
 # --------------------------------------------------------------
 
@@ -114,3 +127,5 @@ class Server:
     
     def mark_as_online(self):
         self.online = True
+
+# --------------------------------------------------------------

@@ -19,6 +19,7 @@ class ArmazonDB:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 quantity INTEGER NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                 shopping_list_id TEXT NOT NULL,
                 FOREIGN KEY (shopping_list_id) REFERENCES shopping_lists (id)
             )
@@ -30,7 +31,7 @@ class ArmazonDB:
         self.conn.commit()
         return new_list_id
 
-    def add_item(self, name, quantity, shopping_list_id):
+    def add_item(self, name, quantity, shopping_list_id, timestamp=None):
         self.cursor.execute('SELECT name FROM items WHERE name = ? AND shopping_list_id = ?', (name, shopping_list_id))
         existing_item = self.cursor.fetchone()
         if existing_item:
@@ -39,6 +40,7 @@ class ArmazonDB:
             self.cursor.execute('INSERT INTO items (name, quantity, shopping_list_id) VALUES (?, ?, ?)',
                                 (name, quantity, shopping_list_id))
             self.conn.commit()
+            self.update_timestamp(name, shopping_list_id, timestamp)
             return self.cursor.lastrowid
  
     def get_shopping_list(self, shopping_list_id):
@@ -72,6 +74,16 @@ class ArmazonDB:
     def update_item(self, item_name, new_quantity, shopping_list_id):
         self.cursor.execute('UPDATE items SET quantity = ? WHERE name = ? AND shopping_list_id = ?',
                             (new_quantity, item_name, shopping_list_id))
+        self.conn.commit()
+        self.update_timestamp(item_name, shopping_list_id)
+
+    def update_timestamp(self, item_name, shopping_list_id, timestamp=None):
+        if timestamp is None:
+            self.cursor.execute('UPDATE items SET timestamp = CURRENT_TIMESTAMP WHERE name = ? AND shopping_list_id = ?',
+                                (item_name, shopping_list_id))
+        else:
+            self.cursor.execute('UPDATE items SET timestamp = ? WHERE name = ? AND shopping_list_id = ?',
+                                (timestamp, item_name, shopping_list_id))
         self.conn.commit()
 
     def clear_shopping_lists(self):
