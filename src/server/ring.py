@@ -45,19 +45,21 @@ class ConsistentHashRing:
         primary_server = self.ring[index][1]
 
         found_addresses = [primary_server.address]
-        ret = []
+        backup = []
 
-        for node in self.ring[index+1:]:
+        for index in range(index+1, len(self.ring) * 3):
+            index = index % len(self.ring)
+            node = self.ring[index]
             print("now in ", node[1].address)
             if node[1].address not in found_addresses:
                 found_addresses.append(node[1].address)
-                ret.append(node[1])
+                backup.append(node[1])
                 print("added ", node[1].address)
-            if len(ret) == 2:
+            if len(backup) == 2:
                 break
 
 
-        return {'primary': primary_server, 'backup': ret}
+        return {'primary': primary_server, 'backup': backup}
 
 
 

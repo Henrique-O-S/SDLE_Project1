@@ -36,6 +36,8 @@ class ListsCRDT:
     @classmethod
     def from_json(cls, json_data):
         crdt = cls()
+        if json_data == None:
+            return crdt
         for element in json_data['add_set']:
             crdt.add_set.add((element[0], element[1]))
         for element in json_data['remove_set']:
