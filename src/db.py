@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 
 class ArmazonDB:
     def __init__(self, name):
@@ -20,6 +21,7 @@ class ArmazonDB:
                 name TEXT NOT NULL,
                 quantity INTEGER NOT NULL,
                 shopping_list_id TEXT NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (shopping_list_id) REFERENCES shopping_lists (id)
             )
         ''')
@@ -72,6 +74,12 @@ class ArmazonDB:
     def update_item(self, item_name, new_quantity, shopping_list_id):
         self.cursor.execute('UPDATE items SET quantity = ? WHERE name = ? AND shopping_list_id = ?',
                             (new_quantity, item_name, shopping_list_id))
+        self.conn.commit()
+        self.update_timestamp(item_name, shopping_list_id)
+
+    def update_timestamp(self, item_name, shopping_list_id):
+        self.cursor.execute('UPDATE items SET timestamp = CURRENT_TIMESTAMP WHERE name = ? AND shopping_list_id = ?',
+                            (item_name, shopping_list_id))
         self.conn.commit()
 
     def clear_shopping_lists(self):

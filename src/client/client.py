@@ -105,11 +105,10 @@ class Client:
         self.update_db_lists()
 
     def lists_to_broker(self):
-        backend_lists_crdt = ListsCRDT()
         crdt_json = self.lists_crdt.to_json()
         crdt_json['action'] = 'crdts'
         response = self.send_request_receive_reply(crdt_json)
-        return backend_lists_crdt
+        return ListsCRDT.from_json(response)
     
     def update_db_lists(self):
         for element in self.lists_crdt.remove_set:

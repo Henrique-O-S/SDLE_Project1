@@ -12,6 +12,7 @@ class ArmazonGUI:
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.build()
         self.root.mainloop()
+        self.curr_page = None
 
     def clear(self):
         for widget in self.content_frame.winfo_children():
@@ -35,7 +36,7 @@ class ArmazonGUI:
         self.header.pack(fill=tk.X)
 
     def refresh_button(self):
-        self.refresh_btn = tk.Button(self.root, text="🔄", font=("Arial", 12), command=self.client.refresh)
+        self.refresh_btn = tk.Button(self.root, text="🔄", font=("Arial", 12), command=self.refresh)
         self.refresh_btn.pack(pady=5)
 
     def home_button(self):
@@ -46,10 +47,21 @@ class ArmazonGUI:
         self.shopping_lists_btn = tk.Button(self.root, text="My Shopping Lists", font=("Arial", 10), bg="#3498db", fg="white", command=self.shopping_lists)
         self.shopping_lists_btn.pack(pady=5)
 
+    def refresh(self):
+        self.client.refresh()
+        if self.curr_page == "home":
+            self.home()
+        elif self.curr_page == "shopping_lists":
+            self.shopping_lists()
+        elif self.curr_page.startswith("shopping_list:"):
+            list_id = self.curr_page.split(":")[1]
+            self.shopping_list(list_id)
+
 # --------------------------------------------------------------
 
     def home(self):
         self.clear()
+        self.curr_page = "home"
         self.create_list_input()
         self.access_list_input()
 
@@ -90,6 +102,7 @@ class ArmazonGUI:
 
     def shopping_lists(self):
         self.clear()
+        self.curr_page = "shopping_lists"
         self.lists()
 
     def lists(self):
@@ -143,6 +156,7 @@ class ArmazonGUI:
         if self.get_list(list_id):
             shopping_list = self.get_list(list_id)
             self.clear()
+            self.curr_page = "shopping_list:" + str(list_id)
             label = tk.Label(self.content_frame, text=f"{shopping_list[1]}", font=("Arial", 14, "bold"))
             label.grid(row=0, column=0, columnspan=4)
             id_label = tk.Label(self.content_frame, text=f"[{shopping_list[0]}]", font=("Arial", 12, "bold"))
