@@ -4,14 +4,14 @@ import zmq
 import json
 import time
 from server.multi_server import MultiServer
-from crdts import ListsCRDT, ItemsCRDT
+from crdts import ListsCRDT
 
 # --------------------------------------------------------------
 
 class Broker:
     def __init__(self, name, frontend_port=5559, backend_port=5560, pulse_check_interval=5, message_receive_timeout=2):
         self.name = name
-        self.pulse_enabled = True
+        self.pulse_enabled = False
         self.pulse_check_interval = pulse_check_interval
         self.message_receive_timeout = message_receive_timeout
         self.last_pulse_check = time.time()
@@ -110,8 +110,10 @@ class Broker:
 
     def search_shopping_list(self, id, client_id):
         server = MultiServer.get_server(id)
+        servers = [server['primary']] + server['backup']
         message = {'action': 'get_shopping_list', 'id': id}
-        self.send_message_server_receive_reply([server], client_id, message)
+        client_id, response = self.send_message_server_receive_reply(servers, client_id, message)
+        self.send_message_client(client_id, response)
 
 # --------------------------------------------------------------
 
@@ -134,15 +136,17 @@ class Broker:
         for element in crdt_json['add_set']:
             server = MultiServer.get_servers(element[0])
             servers_info[server['primary']][0].add((element[0], element[1]))
+            # crdt_json example: {'add_set': [('id', 'name')], 'remove_set': [], 'items': [{'id': {'add_set': [('name', 'quantity', timestamp)], 'remove_set': []}}]}
+            if element[0] in crdt_json['items']:
+                for item in crdt_json['items'][element[0]]['add_set']:
+                    servers_info[server['primary']][0].add_item(element[0], (item[0], item[1]), item[2])
+                for item in crdt_json['items'][element[0]]['remove_set']:
+                    servers_info[server['primary']][0].remove_item(element[0], (item[0], item[1]), item[2])
             servers_info[server['primary']][1] = server['backup']
         for element in crdt_json['remove_set']:
             server = MultiServer.get_servers(element[0])
             servers_info[server['primary']][0].remove((element[0], element[1]))
             servers_info[server['primary']][1] = server['backup']
-        for list_key, items_data in crdt_json['items'].items():
-            server = MultiServer.get_servers(list_key)
-            servers_info[server['primary']][0].items[list_key] = ItemsCRDT.from_json(items_data)
-            servers_info[server['primary']][1] = server['backup']	
         return servers_info
 
 # --------------------------------------------------------------
