@@ -119,7 +119,7 @@ class Broker:
 
     def crdts_to_servers(self, crdt_json, client_id):
         servers_info = self.distribute_crdts(crdt_json)
-        responses = []
+        response =  {'action': 'crdts', 'add_set': [], 'remove_set': [], 'items': {}}
         for server, [crdt, backup_servers] in servers_info.items():
             if crdt.add_set or crdt.remove_set:
                 message = crdt.to_json()
@@ -127,9 +127,12 @@ class Broker:
                 servers = [server] + backup_servers
                 for server_el in servers:
                     print(f"\n [{self.name}]: It will try on {server_el.address}")
-                _, response = self.send_message_server_receive_reply(servers, client_id, message)
-                responses.append(response)
-        self.crdts_to_client(responses, client_id)
+                _, data = self.send_message_server_receive_reply(servers, client_id, message)
+                response['add_set'] += data['add_set']
+                response['remove_set'] += data['remove_set']
+                for list_id, items in data['items'].items():
+                    response['items'][list_id] = items
+        self.send_message_client(client_id, response)
 
     def distribute_crdts(self, crdt_json):
         servers_info = {server: [ListsCRDT(),[]] for server in MultiServer.servers}
@@ -147,17 +150,6 @@ class Broker:
             servers_info[server['primary']][0].remove((element[0], element[1]))
             servers_info[server['primary']][1] = server['backup']
         return servers_info
-
-# --------------------------------------------------------------
-
-    def crdts_to_client(self, responses, client_id):
-        crdt = ListsCRDT()
-        for response in responses:
-            received_crdt = ListsCRDT.from_json(response)
-            crdt.merge(received_crdt)
-        crdt_json = crdt.to_json()
-        crdt_json['action'] = 'crdts'
-        self.send_message_client(client_id, crdt_json)
 
 # --------------------------------------------------------------
 
