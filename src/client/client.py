@@ -3,6 +3,7 @@
 import uuid
 import zmq
 import json
+from broker.multi_broker import MultiBroker
 from db import ArmazonDB
 from crdts import ListsCRDT
 from client.gui import ArmazonGUI
@@ -10,9 +11,11 @@ from client.gui import ArmazonGUI
 # --------------------------------------------------------------
 
 class Client:
-    def __init__(self, name = 'client', broker_port = 5500):
+    def __init__(self, name = 'client', broker_port = 5500, receive_timeout = 10):
         self.name = name
         self.broker_port = broker_port
+        self.changes = 0
+        self.message_receive_timeout = receive_timeout
 
     def run(self):
         self.database = ArmazonDB("client/databases/" + self.name)
@@ -35,19 +38,46 @@ class Client:
             self.lists_crdt.remove((removed_list[0], removed_list[1]))
 
 # --------------------------------------------------------------
+    def change_broker(self):
+        self.changes += 1
+        self.socket.disconnect(f"tcp://127.0.0.1:{self.broker_port}")
+        self.broker_port = self.broker_port + (self.changes % MultiBroker.NUM_BROKERS)
+        self.socket.connect(f"tcp://127.0.0.1:{self.broker_port}")
 
     def connect(self):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
         self.socket.setsockopt(zmq.IDENTITY, str(self.name).encode('utf-8'))
         self.socket.connect(f"tcp://127.0.0.1:{self.broker_port}")
+        self.poller = zmq.Poller()
+        self.poller.register(self.socket, zmq.POLLIN)
 
     def send_request_receive_reply(self, message):
         self.socket.send_multipart([json.dumps(message).encode('utf-8')])
         multipart_message = self.socket.recv_multipart()
         print("\n[BROKER] > ", multipart_message)
         response = json.loads(multipart_message[0].decode('utf-8'))
-        return response
+        #return response daqui para cima é o antigo
+        
+
+
+
+
+        try:
+            sockets = dict(self.poller.poll(self.message_receive_timeout * 1000))
+            if self.socket in sockets and sockets[self.socket] == zmq.POLLIN:
+                multipart_message = self.socket.recv_multipart()
+                print(f"\n [BROKER] > [CLIENT {self.name}]: {multipart_message}")
+
+                response = json.loads(multipart_message[0].decode('utf-8'))
+
+                return response
+            else:
+                print(f"\n [{self.name}]: ASSUMING BROKER IS OFFLINE")
+                print(f"\n[ERROR] > [{self.name}]: No message received within {self.message_receive_timeout} seconds from [BROKER]")
+        except zmq.ZMQError as e:
+            print(f"\n[ERROR] > [{self.name}]: Error receiving message from BROKER: {e}")
+            return None, None
 
 # --------------------------------------------------------------
 
