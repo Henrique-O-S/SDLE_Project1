@@ -73,56 +73,76 @@ class ItemsCRDT:
         self.remove_set = defaultdict(lambda: (0, datetime.min))
 
     def add(self, element, timestamp=None):
-        timestamp = timestamp or datetime.now()
+        timestamp = self.handle_timestamp(timestamp)
         if element[0] in self.add_set:
-            if self.add_set[element[0]][1].isoformat() < timestamp.isoformat():
-                self.add_set[element[0]] = (element[1], datetime.fromisoformat(str(timestamp)))
+            if self.add_set[element[0]][1] < timestamp:
+                self.add_set[element[0]] = (element[1], timestamp)
         else:
-            self.add_set[element[0]] = (element[1], datetime.fromisoformat(str(timestamp)))
+            self.add_set[element[0]] = (element[1], timestamp)
 
-    def remove(self, element, timestamp = None):
-        timestamp = timestamp or datetime.now()
+    def remove(self, element, timestamp=None):
+        timestamp = self.handle_timestamp(timestamp)
         if element[0] in self.remove_set:
-            if self.remove_set[element[0]][1].isoformat() < timestamp.isoformat():
-                self.remove_set[element[0]] = (element[1], datetime.fromisoformat(str(timestamp)))
+            if self.remove_set[element[0]][1] < timestamp:
+                self.remove_set[element[0]] = (element[1], timestamp)
         else:
-            self.remove_set[element[0]] = (element[1], datetime.fromisoformat(str(timestamp)))        
+            self.remove_set[element[0]] = (element[1], timestamp)
 
     def merge(self, other_set):
         for item, (quantity, timestamp) in other_set.add_set.items():
-            timestamp = datetime.fromisoformat(str(timestamp))
+            timestamp = self.handle_timestamp(timestamp)
             if item in self.add_set:
-                if self.add_set[item][1].isoformat() < timestamp.isoformat():
+                if self.add_set[item][1] < timestamp:
                     self.add_set[item] = (quantity, timestamp)
             else:
                 self.add_set[item] = (quantity, timestamp)
         for item, (quantity, timestamp) in other_set.remove_set.items():
-            timestamp = datetime.fromisoformat(str(timestamp))
+            timestamp = self.handle_timestamp(timestamp)
             if item in self.remove_set:
-                if self.remove_set[item][1].isoformat() < timestamp.isoformat():
+                if self.remove_set[item][1] < timestamp:
                     self.remove_set[item] = (quantity, timestamp)
             else:
                 self.remove_set[item] = (quantity, timestamp)
         for item, (quantity, timestamp) in self.add_set.items():
             if item in self.remove_set:
-                if self.remove_set[item][1].isoformat() < timestamp.isoformat():
+                if self.remove_set[item][1] < timestamp:
                     del self.remove_set[item]
-    
+
     def to_json(self):
         return {
-            'add_set': [(item, (quantity, str(timestamp))) for item, (quantity, timestamp) in self.add_set.items()],
-            'remove_set': [(item, (quantity, str(timestamp))) for item, (quantity, timestamp) in self.remove_set.items()]
+            'add_set': [(item, (quantity, self.format_timestamp(timestamp))) for item, (quantity, timestamp) in self.add_set.items()],
+            'remove_set': [(item, (quantity, self.format_timestamp(timestamp))) for item, (quantity, timestamp) in self.remove_set.items()]
         }
-    
+
     @classmethod
     def from_json(cls, json_data):
         crdt = cls()
-        if json_data == None:
+        if json_data is None:
             return crdt
         for item, (quantity, timestamp) in json_data['add_set']:
-            crdt.add_set[item] = (quantity, datetime.fromisoformat(str(timestamp)))
+            timestamp = cls.parse_timestamp(timestamp)
+            crdt.add_set[item] = (quantity, timestamp)
         for item, (quantity, timestamp) in json_data['remove_set']:
-            crdt.remove_set[item] = (quantity, datetime.fromisoformat(str(timestamp)))
+            timestamp = cls.parse_timestamp(timestamp)
+            crdt.remove_set[item] = (quantity, timestamp)
         return crdt
+
+    def handle_timestamp(self, timestamp):
+        if timestamp is None:
+            return datetime.now()
+        elif isinstance(timestamp, str):
+            return datetime.fromisoformat(timestamp)
+        return timestamp
+
+    def format_timestamp(self, timestamp):
+        if isinstance(timestamp, datetime):
+            return timestamp.strftime('%Y-%m-%dT%H:%M:%S.%f')
+        return timestamp
+
+    @staticmethod
+    def parse_timestamp(timestamp):
+        if isinstance(timestamp, str):
+            return datetime.fromisoformat(timestamp)
+        return timestamp
 
 # --------------------------------------------------------------
