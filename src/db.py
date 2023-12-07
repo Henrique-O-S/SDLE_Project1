@@ -50,6 +50,12 @@ class ArmazonDB:
 
         self.conn.commit()
         return new_list_id
+    
+    def replicate_add_shopping_list(self, new_list_id, new_list_name):
+        self.cursor.execute('INSERT INTO shopping_lists (id, name) VALUES (?, ?)', (new_list_id, new_list_name))
+
+        self.conn.commit()
+        return new_list_id
 
     def add_item(self, name, quantity, shopping_list_id, timestamp=None):
         self.cursor.execute('SELECT name FROM items WHERE name = ? AND shopping_list_id = ?', (name, shopping_list_id))
@@ -69,6 +75,19 @@ class ArmazonDB:
             else:
                 # If the shopping list is not in the updated_shopping_lists table, insert a new entry
                 self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id) VALUES (?)', (shopping_list_id,))
+
+            self.conn.commit()
+            self.update_timestamp(name, shopping_list_id, timestamp)
+            return self.cursor.lastrowid
+        
+    def replicate_add_item(self, name, quantity, shopping_list_id, timestamp=None):
+        self.cursor.execute('SELECT name FROM items WHERE name = ? AND shopping_list_id = ?', (name, shopping_list_id))
+        existing_item = self.cursor.fetchone()
+        if existing_item:
+            return None
+        else:
+            self.cursor.execute('INSERT INTO items (name, quantity, shopping_list_id) VALUES (?, ?, ?)',
+                                (name, quantity, shopping_list_id))
 
             self.conn.commit()
             self.update_timestamp(name, shopping_list_id, timestamp)
@@ -115,6 +134,17 @@ class ArmazonDB:
 
             self.conn.commit()
 
+    def replicate_delete_shopping_list(self, shopping_list_id):
+        # Check if the shopping list exists before marking it as removed
+        self.cursor.execute('SELECT * FROM shopping_lists WHERE id = ?', (shopping_list_id,))
+        shopping_list = self.cursor.fetchone()
+
+        if shopping_list:
+            # Mark the shopping list as removed in the shopping_lists table
+            self.cursor.execute('UPDATE shopping_lists SET removed = ? WHERE id = ?', (1, shopping_list_id))
+
+            self.conn.commit()
+
     def delete_item(self, item_name, shopping_list_id):
         self.cursor.execute('DELETE FROM items WHERE name = ? AND shopping_list_id = ?', (item_name, shopping_list_id))
 
@@ -127,6 +157,11 @@ class ArmazonDB:
         else:
             # If the shopping list is not in the updated_shopping_lists table, insert a new entry
             self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id) VALUES (?)', (shopping_list_id,))
+
+        self.conn.commit()
+
+    def replicate_delete_item(self, item_name, shopping_list_id):
+        self.cursor.execute('DELETE FROM items WHERE name = ? AND shopping_list_id = ?', (item_name, shopping_list_id))
 
         self.conn.commit()
 
@@ -143,6 +178,13 @@ class ArmazonDB:
         else:
             # If the shopping list is not in the updated_shopping_lists table, insert a new entry
             self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id) VALUES (?)', (shopping_list_id,))
+
+        self.conn.commit()
+        self.update_timestamp(item_name, shopping_list_id)
+
+    def replicate_update_item(self, item_name, new_quantity, shopping_list_id):
+        self.cursor.execute('UPDATE items SET quantity = ? WHERE name = ? AND shopping_list_id = ?',
+                            (new_quantity, item_name, shopping_list_id))
 
         self.conn.commit()
         self.update_timestamp(item_name, shopping_list_id)

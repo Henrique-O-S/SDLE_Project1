@@ -58,9 +58,13 @@ class Server:
 # --------------------------------------------------------------
 
     def receive_message(self):
+        print(f"\n[{self.port}] > Waiting for message")
         multipart_message = self.socket.recv_multipart()
         print(f"\n[{self.port}][BROKER] > {multipart_message}")
-        client_id, message = multipart_message[0], multipart_message[1]
+        if len(multipart_message) == 2:
+            client_id, message = multipart_message[0], multipart_message[1]
+        else:
+            client_id, message = b"", multipart_message[0]
         message = json.loads(message.decode('utf-8'))
         return client_id, message
 
@@ -136,8 +140,8 @@ class Server:
     def process_replication(self, crdt, client_id):
         self.lists_crdt.merge(crdt)
         crdt_json = self.lists_crdt.to_json()
-        crdt_json['action'] = 'crdts'
-        self.update_db_lists()
+        crdt_json['action'] = 'replication'
+        self.replicate_db_lists()
         self.send_message(client_id, crdt_json)
 
     def default_response(self, client_id):
@@ -154,6 +158,14 @@ class Server:
         for element in self.lists_crdt.remove_set:
             self.database.delete_shopping_list(element[0])
 
+    def replicate_db_lists(self):
+        for element in self.lists_crdt.add_set:
+            if self.database.get_shopping_list(element[0]) == None:
+                self.database.replicate_add_shopping_list(element[0], element[1])
+            self.replicate_db_items(element[0])
+        for element in self.lists_crdt.remove_set:
+            self.database.replicate_delete_shopping_list(element[0])
+
     def update_db_items(self, shopping_list_id):
         for item_name, (quantity, _) in self.lists_crdt.items_crdt.get(shopping_list_id).add_set.items():
             existing_item = self.database.get_item(shopping_list_id, item_name)
@@ -163,6 +175,16 @@ class Server:
                 self.database.update_item(item_name, quantity, shopping_list_id)
         for item_name, _ in self.lists_crdt.items_crdt.get(shopping_list_id).remove_set.items():
             self.database.delete_item(item_name, shopping_list_id)
+
+    def replicate_db_items(self, shopping_list_id):
+        for item_name, (quantity, _) in self.lists_crdt.items_crdt.get(shopping_list_id).add_set.items():
+            existing_item = self.database.get_item(shopping_list_id, item_name)
+            if existing_item is None:
+                self.database.replicate_add_item(item_name, quantity, shopping_list_id)
+            else:
+                self.database.replicate_update_item(item_name, quantity, shopping_list_id)
+        for item_name, _ in self.lists_crdt.items_crdt.get(shopping_list_id).remove_set.items():
+            self.database.replicate_delete_item(item_name, shopping_list_id)
 
 # --------------------------------------------------------------
 
@@ -196,7 +218,7 @@ class Server:
         self.broker_port = broker + 8500
         if self.socket:
             self.socket.close()
-        self.socket = self.context.socket(zmq.REQ)
+        self.socket = self.context.socket(zmq.DEALER)
         self.socket.setsockopt(zmq.IDENTITY, str(self.name).encode('utf-8'))
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
@@ -208,14 +230,14 @@ class Server:
             broker = self.curr_broker_nr % 3
             self.connect_to_broker(broker)
             print(f"\n [{self.name}]: Trying broker {self.broker_port}")
-            self.socket.send_multipart([json.dumps(message).encode('utf-8')])
+            self.socket.send_multipart([b"", self.name.encode('utf-8'), json.dumps(message).encode('utf-8')])
             try:
                 sockets = dict(self.poller.poll(self.message_receive_timeout * 1000))
                 if self.socket in sockets and sockets[self.socket] == zmq.POLLIN:
                     multipart_message = self.socket.recv_multipart()
                     self.socket.disconnect(f"tcp://127.0.0.1:{self.broker_port}")
                     print(f"\n [BROKER] > [SERVER {self.name}]: {multipart_message}")
-                    response = json.loads(multipart_message[0].decode('utf-8'))
+                    response = json.loads(multipart_message[1].decode('utf-8'))
                     return response
                 else:
                     print(f"\n[ERROR] > [{self.name}]: No message received within {self.message_receive_timeout} seconds from [BROKER {self.broker_port}]")
