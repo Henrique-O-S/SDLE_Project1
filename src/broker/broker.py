@@ -9,7 +9,7 @@ from crdts import ListsCRDT
 # --------------------------------------------------------------
 
 class Broker:
-    def __init__(self, name, frontend_port=5559, backend_port=5560, pulse_check_interval=5, message_receive_timeout=1):
+    def __init__(self, name, frontend_port=5559, backend_port=5560, pulse_check_interval=5, message_receive_timeout=2):
         self.name = name
         self.pulse_enabled = False
         self.pulse_check_interval = pulse_check_interval
@@ -50,9 +50,28 @@ class Broker:
         except zmq.ZMQError as e:
             print(f"\n[ERROR] > [{self.name}]: Error receiving message from CLIENT: {e}")
             return None, None
+        
+    def receive_message_server(self):
+        try:
+            sockets = dict(self.poller.poll(self.message_receive_timeout * 1000))
+            if self.backend_socket in sockets and sockets[self.backend_socket] == zmq.POLLIN:
+                multipart_message = self.backend_socket.recv_multipart()
+                print(f"\n [SERVER] > [{self.name}]: {multipart_message}")
+                server_id, message = multipart_message[0], multipart_message[2]
+                message = json.loads(message.decode('utf-8'))
+                return server_id, message
+            else:
+                print(f"\n[ERROR] > [{self.name}]: No message received within {self.message_receive_timeout} seconds from [SERVER]")
+                return None, None
+        except zmq.ZMQError as e:
+            print(f"\n[ERROR] > [{self.name}]: Error receiving message from SERVER: {e}")
+            return None, None
 
     def send_message_client(self, client_id, message):
         self.frontend_socket.send_multipart([client_id, b"", json.dumps(message).encode('utf-8')])
+
+    def send_message_server(self, server_id, message):
+        self.frontend_socket.send_multipart([server_id, b"", json.dumps(message).encode('utf-8')])
 
     def send_message_server_receive_reply(self, servers, client_id, message, pulse=False):
         for server in servers:
@@ -84,6 +103,41 @@ class Broker:
                 return None, None
         print(f"\n [{self.name}]: No server online")
         return None, None
+    
+    def send_message_servers_receive_replies(self, servers, server_id, message, pulse=False):
+        reply = []
+        error_flag = False
+        for server in servers:
+            if server.address - 8000 != server_id:
+                print(f"\n [{self.name}]: Trying server {server.address}")
+                if not pulse and not server.online:
+                    continue
+                print(server.address, server.online)
+                self.backend_socket.connect(server.address)
+                self.backend_socket.send_multipart([b"", server_id, json.dumps(message).encode('utf-8')])
+                try:
+                    sockets = dict(self.poller.poll(self.message_receive_timeout * 1000))
+                    if self.backend_socket in sockets and sockets[self.backend_socket] == zmq.POLLIN:
+                        multipart_message = self.backend_socket.recv_multipart()
+                        print(f"\n [SERVER] > [{self.name}]: {multipart_message}")
+
+                        self.backend_socket.disconnect(server.address)
+
+                        server_id, message = multipart_message[1], multipart_message[2]
+                        message = json.loads(message.decode('utf-8'))
+                        server.mark_as_online()
+                    else:
+                        server.mark_as_offline()
+                        self.backend_socket.disconnect(server.address)
+                        print(f"\n [{self.name}]: {server.address} is offline")
+                        print(f"\n[ERROR] > [{self.name}]: No messages received within {self.message_receive_timeout} seconds from [SERVER]")
+                        error_flag = True
+                except zmq.ZMQError as e:
+                    print(f"\n[ERROR] > [{self.name}]: Error receiving message from SERVER: {e}")
+                    return None, None
+        if error_flag:
+            reply = {'status': 'ERROR', 'action': 'replication'}
+        return server_id, reply
 
 # --------------------------------------------------------------
 
@@ -97,6 +151,7 @@ class Broker:
                 self.last_pulse_check = current_time
             self.socks = dict(self.poller.poll(1000))
             self.frontend_polling()
+            self.backend_polling()
 
     def frontend_polling(self):
         if self.frontend_socket in self.socks and self.socks[self.frontend_socket] == zmq.POLLIN:
@@ -105,6 +160,13 @@ class Broker:
                 self.search_shopping_list(message['id'], client_id)
             elif message['action'] == 'crdts':
                 self.crdts_to_servers(message, client_id)
+
+    def backend_polling(self):
+        if self.backend_socket in self.socks and self.socks[self.backend_socket] == zmq.POLLIN:
+            print(f"\n [{self.name}]: Received message from server")
+            server_id, message = self.receive_message_server()
+            if message['action'] == 'replication':
+                self.replication_to_servers(message, server_id)
 
 # --------------------------------------------------------------
 
@@ -117,9 +179,24 @@ class Broker:
 
 # --------------------------------------------------------------
 
+    def replication_to_servers(self, crdt_json, server_id):
+        servers_info = self.distribute_crdts(crdt_json)
+        response = []
+        for server, [crdt, backup_servers] in servers_info.items():
+            if crdt.add_set or crdt.remove_set:
+                message = crdt.to_json()
+                message['action'] = 'replication'
+                servers = [server] + backup_servers
+                for server_el in servers:
+                    print(f"\n [{self.name}]: It will try on {server_el.address}")
+                _, data = self.send_message_servers_receive_replies(servers, server_id, message)
+                if data['status'] == 'ERROR':
+                    response = data
+        self.send_message_server(server_id, response)
+
     def crdts_to_servers(self, crdt_json, client_id):
         servers_info = self.distribute_crdts(crdt_json)
-        response =  {'action': 'crdts', 'add_set': [], 'remove_set': [], 'items': {}}
+        response = {'action': 'crdts', 'add_set': [], 'remove_set': [], 'items': {}}
         for server, [crdt, backup_servers] in servers_info.items():
             if crdt.add_set or crdt.remove_set:
                 message = crdt.to_json()
