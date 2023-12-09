@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import uuid
 
+
 class ConsistentHashRing:
     def __init__(self, servers, virtual_nodes=1, plot=False, test=False, hashing_option=2, replication_factor=2):
         self.servers = servers
@@ -11,7 +12,8 @@ class ConsistentHashRing:
         self.hashing_option = hashing_option
         self.replication_factor = replication_factor
         if self.replication_factor > len(servers) - 1:
-            print("Replication factor cannot be greater than the number of servers. Setting replication factor to", len(servers) - 1)
+            print("Replication factor cannot be greater than the number of servers. Setting replication factor to", len(
+                servers) - 1)
             self.replication_factor = len(servers) - 1
         self.ring = self._build_ring()
         if plot:
@@ -54,43 +56,70 @@ class ConsistentHashRing:
         for index in range(index+1, len(self.ring) * 3):
             index = index % len(self.ring)
             node = self.ring[index]
-            #print("now in ", node[1].address)
+            # print("now in ", node[1].address)
             if node[1].address not in found_addresses:
                 found_addresses.append(node[1].address)
                 backup.append(node[1])
-                #print("added ", node[1].address)
+                # print("added ", node[1].address)
             if len(backup) == self.replication_factor:
                 break
 
-
         return {'primary': primary_server, 'backup': backup}
-
-
-
-
 
     def plot_ring(self):
         num_nodes = len(self.ring)
-        radius = 2  # Adjust the radius as needed
+        radius = 3  # Adjust the radius as needed
 
         fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
-        ax.set_xlim([-radius, radius])
-        ax.set_ylim([-radius, radius])
+        ax.set_xlim([-radius - 1, radius + 1])
+        ax.set_ylim([-radius - 1, radius + 1])
 
-        circle = plt.Circle((0, 0), radius, edgecolor='b', facecolor='none')
+        circle = plt.Circle((0, 0), radius, edgecolor='black', facecolor='none')
         ax.add_artist(circle)
+
+        unique_nodes = list(set(server.name for _, server in self.ring))
+        colors = plt.cm.rainbow(np.linspace(0, 1, len(unique_nodes)))
+
+        node_colors = {node: colors[i] for i, node in enumerate(unique_nodes)}
+        legend_handles = []
 
         for i, (_, server) in enumerate(self.ring):
             angle = 2 * np.pi * i / num_nodes
             x = radius * np.cos(angle)
             y = radius * np.sin(angle)
 
-            ax.text(x, y, f"{server.name}\n({server.port})\n({i % self.virtual_nodes})", ha='center', va='center', fontweight='bold')
+            # Plot a cross (X) for each node with a unique color
+            ax.scatter(x, y, marker='x', s=100, color=node_colors[server.name])
+
+            # Add to legend only if not added before
+            if server.name not in [handle.get_label() for handle in legend_handles]:
+                legend_handles.append(ax.scatter([], [], marker='x', color=node_colors[server.name], label=server.name, s=100))
+
+        # Add information about the number of physical and virtual nodes to the legend
+        num_physical_nodes = len(set(server.name.split('-')[0] for _, server in self.ring))
+        num_virtual_nodes = len(self.ring) // num_physical_nodes
+
+        # Create a second legend for the additional information
+        additional_legend = ax.legend(handles=[ax.scatter([], [], marker='x', color='none', label=f"Physical Nodes: {num_physical_nodes}\nVirtual Nodes: {num_virtual_nodes}")],
+                                    loc='upper right', bbox_to_anchor=(1, 1))
+
+        ax.add_artist(additional_legend)  # Add the second legend to the plot
 
         ax.set_xticks([])
         ax.set_yticks([])
 
+        # Create a legend in the upper left corner with node labels and colors
+        ax.legend(handles=legend_handles, loc='upper left')
+
         plt.show()
+
+
+
+
+
+
+
+
 
     def add_node(self, server):
         for i in range(self.virtual_nodes):
@@ -106,7 +135,7 @@ class ConsistentHashRing:
             shopping_list_id = str(uuid.uuid4())
             server = self.get_node(shopping_list_id)
             assignments_count[server.name] += 1
-            #print(f"Shopping List {shopping_list_id} assigned to Server {server.name}")
+            # print(f"Shopping List {shopping_list_id} assigned to Server {server.name}")
         print("Test complete")
         for server_name, count in assignments_count.items():
             print(f"Server {server_name} got {count} shopping lists.")
