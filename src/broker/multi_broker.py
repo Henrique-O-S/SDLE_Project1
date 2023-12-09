@@ -18,6 +18,6 @@ class MultiBroker:
     @staticmethod
     def start_brokers():
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            executor.map(MultiBroker.run_broker, MultiBroker.brokers)
+            executor.map(MultiBroker.run_broker, MultiBroker.brokers[2:])
 
 # --------------------------------------------------------------
