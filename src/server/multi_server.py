@@ -23,6 +23,7 @@ class MultiServer:
     def start_servers():
         with concurrent.futures.ThreadPoolExecutor() as executor:
             executor.map(MultiServer.run_server, MultiServer.servers)
+            #executor.map(MultiServer.run_server, MultiServer.servers[2:])
     
     @staticmethod
     def get_servers(key):

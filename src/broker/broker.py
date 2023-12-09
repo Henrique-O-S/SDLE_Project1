@@ -62,10 +62,8 @@ class Broker:
                 multipart_message = self.backend_socket.recv_multipart()
                 print(f"\n [SERVER] > [{self.name}]: {multipart_message}")
                 server_id, message = multipart_message[1], multipart_message[2]
-                print(f"\n [SERVER2] > [{self.name}]: {server_id}, {message}")
                 server_id = (server_id.decode('utf-8'))
                 message = json.loads(message.decode('utf-8'))
-                print(f"\n [SERVER3] > [{self.name}]: {server_id}, {message}")
                 return server_id, message
             else:
                 print(f"\n[ERROR] > [{self.name}]: No message received within {self.message_receive_timeout} seconds from [SERVER]")
@@ -118,6 +116,8 @@ class Broker:
             if server.name != server_og.name:
                 print(f"\n [{self.name}]: Trying server {server.address}")
                 if not pulse and not server.online:
+                    print(f"\n [{self.name}]: {server.address} is offline")
+                    error_flag = True
                     continue
                 print(server.address, server.online)
                 self.replication_socket.connect(server.address)
@@ -145,10 +145,12 @@ class Broker:
                     print(f"\n[ERROR] > [{self.name}]: Error receiving message from SERVER: {e}")
                     return None, None
         if error_flag:
+            print(f"\n [{self.name}]: No server online")
             reply = {'status': 'ERROR', 'action': 'replication'}
         else:
             reply = {'status': 'OK', 'action': 'replication'}
-        return server_id, reply
+        print(f"\n [{self.name}]: Sending message to server {server_og.address}")
+        return server_og.name, reply
 
 # --------------------------------------------------------------
 
@@ -176,7 +178,6 @@ class Broker:
         if self.backend_socket in self.socks and self.socks[self.backend_socket] == zmq.POLLIN:
             print(f"\n [{self.name}]: Received message from server")
             server_id, message = self.receive_message_server()
-            print(f"\n [{self.name}]: Message received from server {server_id}")
             if message['action'] == 'replication':
                 self.replication_to_servers(message, server_id)
 
@@ -208,7 +209,6 @@ class Broker:
                 response = data
         print(f"\n [{self.name}]: Sending message to server {server_id}")
         self.send_message_server(server_id, response)
-        print(f"\n [{self.name}]: Waiting for reply from server {server_id}")
 
     def crdts_to_servers(self, crdt_json, client_id):
         servers_info = self.distribute_crdts(crdt_json)

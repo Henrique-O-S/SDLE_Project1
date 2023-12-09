@@ -189,7 +189,7 @@ class Server:
 # --------------------------------------------------------------
 
     def check_for_updates(self):
-        self.disconnect()
+        #self.disconnect()
 
         # Retrieve shopping lists that have been updated
         updated_shopping_lists = self.database.get_updated_shopping_lists()
@@ -204,7 +204,6 @@ class Server:
                     print(f"\n[{self.port}] > Updating updated lists CRDT")
                     self.updated_lists_crdt = ListsCRDT()
                     self.database.clear_updated_shopping_lists()
-                    print(f"\n[{self.port}] > Updated lists CRDT: {self.updated_lists_crdt}")
 
         print(f"\n[{self.port}] > Updated lists CRDT: {self.updated_lists_crdt}")
 
