@@ -5,7 +5,7 @@ import tkinter as tk
 # --------------------------------------------------------------
 
 class ArmazonGUI:
-    def __init__(self, client, automatic_refresh=True, refresh_interval=10):
+    def __init__(self, client, automatic_refresh=False, refresh_interval=10):
         self.client = client
         self.automatic_refresh = automatic_refresh
         self.refresh_interval = refresh_interval
@@ -14,7 +14,7 @@ class ArmazonGUI:
         self.root.title("ARMAZON")
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.build()
-        self.refresh_schedule()
+        self.root.after(self.refresh_interval * 1000, self.refresh_schedule)
         self.root.mainloop()
 
     def refresh_schedule(self):
