@@ -1,13 +1,11 @@
 import bisect
 import hashlib
 import random
-import numpy as np
-import matplotlib.pyplot as plt
 import uuid
 
 
 class ConsistentHashRing:
-    def __init__(self, servers, virtual_nodes=1, plot=False, hashing_option=1, replication_factor=2):
+    def __init__(self, servers, virtual_nodes=1, hashing_option=1, replication_factor=2):
         self.servers = servers
         self.virtual_nodes = virtual_nodes
         self.hashing_option = hashing_option
@@ -17,9 +15,6 @@ class ConsistentHashRing:
                 servers) - 1)
             self.replication_factor = len(servers) - 1
         self.ring = self._build_ring()
-        if plot:
-            self.plot_ring()
-            self.create_shopping_lists_and_plot(100000)
 
     def _build_ring(self):
         ring = []
@@ -64,95 +59,6 @@ class ConsistentHashRing:
                 break
 
         return {'primary': primary_server, 'backup': backup}
-
-    def plot_ring(self):
-        num_nodes = len(self.ring)
-        radius = 3  # Adjust the radius as needed
-
-        fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
-        ax.set_xlim([-radius - 2, radius + 0.2])
-        ax.set_ylim([-radius - 0.2, radius + 0.2])
-
-        circle = plt.Circle((0, 0), radius, edgecolor='black', facecolor='none')
-        ax.add_artist(circle)
-
-        unique_nodes = list(server.name for server in self.servers)
-        colors = plt.cm.rainbow(np.linspace(0, 1, len(unique_nodes)))
-
-        node_colors = {node: colors[i] for i, node in enumerate(unique_nodes)}
-        legend_handles = []
-
-
-        for i, (key, server) in enumerate(self.ring):
-            angle = (2 * np.pi * (key % 10**32)) / (10 ** 32)
-            x = radius * np.cos(angle)
-            y = radius * np.sin(angle)
-
-            # Plot a cross (X) for each node with a unique color
-            ax.scatter(x, y, marker='x', s=300, color=node_colors[server.name])
-
-            # Add to legend only if not added before
-            if server.name not in [handle.get_label() for handle in legend_handles]:
-                legend_handles.append(ax.scatter([], [], marker='x', color=node_colors[server.name], label=server.name, s=100))
-
-        # Plot shopping lists
-        assigned_shopping_lists = self.add_shopping_lists(ax)
-        #append to legend number of shopping lists assinged to each server
-        for server, num_lists in assigned_shopping_lists.items():
-            legend_handles.append(plt.Line2D([0], [0], marker='o', color='grey', label=f"{server}: {num_lists}", markersize=10, markerfacecolor='none'))
-
-        # Create a single legend for nodes
-        legend_handles.append(plt.Line2D([0], [0], marker='x', color='w', label=f"Physical Nodes: {len(self.servers)}\nVirtual Nodes: {self.virtual_nodes}", markersize=10, markerfacecolor='none'))
-        ax.legend(handles=legend_handles, loc='upper left')
-
-        ax.set_xticks([])
-        ax.set_yticks([])
-
-        plt.show()
-
-
-    def add_shopping_lists(self, ax, num_lists=10):
-        assigned_shopping_lists = {server.name: 0 for server in self.servers}
-        shopping_lists = [str(uuid.uuid4()) for _ in range(num_lists)]
-
-        for shopping_list_id in shopping_lists:
-            nodes = self.get_nodes(shopping_list_id)
-            primary_server = nodes['primary']
-
-            # Calculate the angle for the primary server
-            primary_angle = (2 * np.pi * (self._hash_key(shopping_list_id) % 10**32)) / (10 ** 32)
-
-            # Plot the shopping list for the primary server
-            x_primary = 3 * np.cos(primary_angle)
-            y_primary = 3 * np.sin(primary_angle)
-            ax.scatter(x_primary, y_primary, marker='o', color='grey', s=200)
-
-            assigned_shopping_lists[primary_server.name] += 1
-
-        return assigned_shopping_lists
-
-    def create_shopping_lists_and_plot(self, num_lists):
-        assigned_shopping_lists = {server.name: 0 for server in self.servers}
-        shopping_lists = [str(uuid.uuid4()) for _ in range(num_lists)]
-
-        for shopping_list_id in shopping_lists:
-            nodes = self.get_nodes(shopping_list_id)
-            primary_server = nodes['primary']
-            assigned_shopping_lists[primary_server.name] += 1
-
-        # Plotting
-        servers = list(assigned_shopping_lists.keys())
-        counts = list(assigned_shopping_lists.values())
-
-        fig, ax = plt.subplots()
-        ax.bar(servers, counts, color='blue')
-        ax.set_ylabel('Number of Shopping Lists')
-        ax.set_xlabel('Server Name')
-        ax.set_title(f'Distribution of {num_lists} Shopping Lists\n SHA-256 \n {self.virtual_nodes} virtual nodes')
-
-        plt.show()
-
-
 
 
     def add_node(self, server):
