@@ -18,7 +18,7 @@ class ConsistentHashRing:
             self.replication_factor = len(servers) - 1
         self.ring = self._build_ring()
         if plot:
-            self.plot_ring()
+            #self.plot_ring()
             self.create_shopping_lists_and_plot(100000)
 
     def _build_ring(self):
@@ -35,7 +35,7 @@ class ConsistentHashRing:
 
     def _hash_key(self, key):
         if self.hashing_option == 0:
-            return int(hashlib.md5(key.encode()).hexdigest(), 16)
+            return int(hashlib.md5(key.encode()).hexdigest(), 16) % 10**32
         elif self.hashing_option == 1:
             return int(hashlib.sha256(key.encode()).hexdigest(), 16) % 10**32
         elif self.hashing_option == 2:
