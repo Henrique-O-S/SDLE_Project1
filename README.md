@@ -1,8 +1,54 @@
 # Armazon - Class 8 Group 1
 
-- Diogo Filipe Ferreira da Silva up202004288
-- Henrique Oliveira Silva up202007242
-- Tiago Nunes Moreira Branquinho up202005567
+- Diogo Filipe Ferreira da Silva, up202004288
+- Henrique Oliveira Silva, up202007242
+- Tiago Nunes Moreira Branquinho, up202005567
+
+---
+
+## Dependencies
+
+
+### ZeroMQ
+```
+pip install pyzmq
+```
+
+### Tkinter
+```
+pip install tk
+```
+
+### NTP
+```
+pip install ntplib
+```
+
+---
+
+## How to Run System
+
+- Execute the following commands inside **src** directory:
+
+### Clients
+
+```
+python cli.py
+```
+
+### Brokers
+
+```
+python brk.py
+```
+
+### Servers
+
+```
+python svr.py
+```
+
+---
 
 ## Planned Project Design
 
