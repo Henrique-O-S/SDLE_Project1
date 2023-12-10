@@ -19,7 +19,7 @@ class ConsistentHashRing:
         self.ring = self._build_ring()
         if plot:
             self.plot_ring()
-            #self.create_shopping_lists_and_plot(100000)
+            self.create_shopping_lists_and_plot(100000)
 
     def _build_ring(self):
         ring = []
@@ -89,7 +89,7 @@ class ConsistentHashRing:
             y = radius * np.sin(angle)
 
             # Plot a cross (X) for each node with a unique color
-            ax.scatter(x, y, marker='x', s=100, color=node_colors[server.name])
+            ax.scatter(x, y, marker='x', s=300, color=node_colors[server.name])
 
             # Add to legend only if not added before
             if server.name not in [handle.get_label() for handle in legend_handles]:
@@ -111,7 +111,7 @@ class ConsistentHashRing:
         plt.show()
 
 
-    def add_shopping_lists(self, ax, num_lists=5):
+    def add_shopping_lists(self, ax, num_lists=10):
         assigned_shopping_lists = {server.name: 0 for server in self.servers}
         shopping_lists = [str(uuid.uuid4()) for _ in range(num_lists)]
 
@@ -125,7 +125,7 @@ class ConsistentHashRing:
             # Plot the shopping list for the primary server
             x_primary = 3 * np.cos(primary_angle)
             y_primary = 3 * np.sin(primary_angle)
-            ax.scatter(x_primary, y_primary, marker='o', color='grey', s=30)
+            ax.scatter(x_primary, y_primary, marker='o', color='grey', s=200)
 
             assigned_shopping_lists[primary_server.name] += 1
 
