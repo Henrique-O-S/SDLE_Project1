@@ -9,7 +9,7 @@ from crdts import ListsCRDT
 # --------------------------------------------------------------
 
 class Broker:
-    def __init__(self, name, frontend_port=5559, backend_port=5560, replication_port=5561, pulse_check_interval=5, message_receive_timeout=2):
+    def __init__(self, name, frontend_port=5559, backend_port=5560, replication_port=5561, pulse_check_interval=25, message_receive_timeout=1):
         self.name = name
         self.pulse_enabled = False
         self.pulse_check_interval = pulse_check_interval

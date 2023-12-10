@@ -131,7 +131,6 @@ class ItemsCRDT:
         if timestamp is None:
             return datetime.now()
         elif isinstance(timestamp, str):
-            print("boasss")
             return datetime.fromisoformat(timestamp)
         return timestamp
 
