@@ -35,7 +35,11 @@ class ArmazonDB:
         ''')
         self.conn.commit()
 
-    def add_shopping_list(self, new_list_id, new_list_name):
+    def add_shopping_list(self, new_list_id, new_list_name, timestamp=None):
+        if timestamp is None:
+            # If no timestamp is provided, use the current timestamp
+            timestamp = "CURRENT_TIMESTAMP"
+
         self.cursor.execute('INSERT INTO shopping_lists (id, name) VALUES (?, ?)', (new_list_id, new_list_name))
 
         # Check if the shopping list has already been updated
@@ -43,10 +47,10 @@ class ArmazonDB:
         result = self.cursor.fetchone()
         if result:
             # If the shopping list is already in the updated_shopping_lists table, update the timestamp
-            self.cursor.execute('UPDATE updated_shopping_lists SET updated_at = CURRENT_TIMESTAMP WHERE shopping_list_id = ?', (new_list_id,))
+            self.cursor.execute('UPDATE updated_shopping_lists SET updated_at = ? WHERE shopping_list_id = ?', (timestamp, new_list_id,))
         else:
             # If the shopping list is not in the updated_shopping_lists table, insert a new entry
-            self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id) VALUES (?)', (new_list_id,))
+            self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id, updated_at) VALUES (?, ?)', (new_list_id, timestamp))
 
         self.conn.commit()
         return new_list_id
@@ -117,7 +121,7 @@ class ArmazonDB:
         self.cursor.execute('SELECT * FROM items WHERE shopping_list_id = ? AND name = ?', (shopping_list_id, item_name))
         return self.cursor.fetchone()
 
-    def delete_shopping_list(self, shopping_list_id):
+    def delete_shopping_list(self, shopping_list_id, timestamp=None):
         # Check if the shopping list exists before marking it as removed
         self.cursor.execute('SELECT * FROM shopping_lists WHERE id = ?', (shopping_list_id,))
         shopping_list = self.cursor.fetchone()
@@ -131,10 +135,16 @@ class ArmazonDB:
             result = self.cursor.fetchone()
             if result:
                 # If the shopping list is already in the updated_shopping_lists table, update the timestamp
-                self.cursor.execute('UPDATE updated_shopping_lists SET removed = ?, updated_at = CURRENT_TIMESTAMP WHERE shopping_list_id = ?', (1, shopping_list_id,))
+                if timestamp:
+                    self.cursor.execute('UPDATE updated_shopping_lists SET removed = ?, updated_at = ? WHERE shopping_list_id = ?', (1, timestamp, shopping_list_id,))
+                else:
+                    self.cursor.execute('UPDATE updated_shopping_lists SET removed = ?, updated_at = CURRENT_TIMESTAMP WHERE shopping_list_id = ?', (1, shopping_list_id,))
             else:
-                # If the shopping list is not in the updated_shopping_lists table, insert a new entry
-                self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id, removed, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)', (shopping_list_id, 1))
+                # If the shopping list is not in the updated_shopping_lists table, insert a new entry with the provided or current timestamp
+                if timestamp:
+                    self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id, removed, updated_at) VALUES (?, ?, ?)', (shopping_list_id, 1, timestamp,))
+                else:
+                    self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id, removed, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)', (shopping_list_id, 1,))
 
             self.conn.commit()
 
@@ -149,7 +159,7 @@ class ArmazonDB:
 
             self.conn.commit()
 
-    def delete_item(self, item_name, shopping_list_id):
+    def delete_item(self, item_name, shopping_list_id, timestamp=None):
         self.cursor.execute('DELETE FROM items WHERE name = ? AND shopping_list_id = ?', (item_name, shopping_list_id))
 
         # Check if the shopping list has already been updated
@@ -157,10 +167,16 @@ class ArmazonDB:
         result = self.cursor.fetchone()
         if result:
             # If the shopping list is already in the updated_shopping_lists table, update the timestamp
-            self.cursor.execute('UPDATE updated_shopping_lists SET updated_at = CURRENT_TIMESTAMP WHERE shopping_list_id = ?', (shopping_list_id,))
+            if timestamp:
+                self.cursor.execute('UPDATE updated_shopping_lists SET updated_at = ? WHERE shopping_list_id = ?', (timestamp, shopping_list_id,))
+            else:
+                self.cursor.execute('UPDATE updated_shopping_lists SET updated_at = CURRENT_TIMESTAMP WHERE shopping_list_id = ?', (shopping_list_id,))
         else:
-            # If the shopping list is not in the updated_shopping_lists table, insert a new entry
-            self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id) VALUES (?)', (shopping_list_id,))
+            # If the shopping list is not in the updated_shopping_lists table, insert a new entry with the provided or current timestamp
+            if timestamp:
+                self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id, updated_at) VALUES (?, ?)', (shopping_list_id, timestamp,))
+            else:
+                self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id) VALUES (?)', (shopping_list_id,))
 
         self.conn.commit()
 
@@ -169,7 +185,7 @@ class ArmazonDB:
 
         self.conn.commit()
 
-    def update_item(self, item_name, new_quantity, shopping_list_id):
+    def update_item(self, item_name, new_quantity, shopping_list_id, timestamp=None):
         self.cursor.execute('UPDATE items SET quantity = ? WHERE name = ? AND shopping_list_id = ?',
                             (new_quantity, item_name, shopping_list_id))
         
@@ -178,20 +194,26 @@ class ArmazonDB:
         result = self.cursor.fetchone()
         if result:
             # If the shopping list is already in the updated_shopping_lists table, update the timestamp
-            self.cursor.execute('UPDATE updated_shopping_lists SET updated_at = CURRENT_TIMESTAMP WHERE shopping_list_id = ?', (shopping_list_id,))
+            if timestamp:
+                self.cursor.execute('UPDATE updated_shopping_lists SET updated_at = ? WHERE shopping_list_id = ?', (timestamp, shopping_list_id,))
+            else:
+                self.cursor.execute('UPDATE updated_shopping_lists SET updated_at = CURRENT_TIMESTAMP WHERE shopping_list_id = ?', (shopping_list_id,))
         else:
-            # If the shopping list is not in the updated_shopping_lists table, insert a new entry
-            self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id) VALUES (?)', (shopping_list_id,))
+            # If the shopping list is not in the updated_shopping_lists table, insert a new entry with the provided or current timestamp
+            if timestamp:
+                self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id, updated_at) VALUES (?, ?)', (shopping_list_id, timestamp,))
+            else:
+                self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id) VALUES (?)', (shopping_list_id,))
 
         self.conn.commit()
-        self.update_timestamp(item_name, shopping_list_id)
+        self.update_timestamp(item_name, shopping_list_id, timestamp)
 
-    def replicate_update_item(self, item_name, new_quantity, shopping_list_id):
+    def replicate_update_item(self, item_name, new_quantity, shopping_list_id, timestamp=None):
         self.cursor.execute('UPDATE items SET quantity = ? WHERE name = ? AND shopping_list_id = ?',
                             (new_quantity, item_name, shopping_list_id))
 
         self.conn.commit()
-        self.update_timestamp(item_name, shopping_list_id)
+        self.update_timestamp(item_name, shopping_list_id, timestamp)
 
     def update_timestamp(self, item_name, shopping_list_id, timestamp=None):
         if timestamp is None:
@@ -216,7 +238,7 @@ class ArmazonDB:
         self.cursor.execute('DELETE FROM updated_shopping_lists')
         self.conn.commit()
 
-    def clear_list_items(self, shopping_list_id):
+    def clear_list_items(self, shopping_list_id, timestamp=None):
         self.cursor.execute('DELETE FROM items WHERE shopping_list_id = ?', (shopping_list_id,))
         
         # Check if the shopping list has already been updated
@@ -224,10 +246,16 @@ class ArmazonDB:
         result = self.cursor.fetchone()
         if result:
             # If the shopping list is already in the updated_shopping_lists table, update the timestamp
-            self.cursor.execute('UPDATE updated_shopping_lists SET updated_at = CURRENT_TIMESTAMP WHERE shopping_list_id = ?', (shopping_list_id,))
+            if timestamp:
+                self.cursor.execute('UPDATE updated_shopping_lists SET updated_at = ? WHERE shopping_list_id = ?', (timestamp, shopping_list_id,))
+            else:
+                self.cursor.execute('UPDATE updated_shopping_lists SET updated_at = CURRENT_TIMESTAMP WHERE shopping_list_id = ?', (shopping_list_id,))
         else:
-            # If the shopping list is not in the updated_shopping_lists table, insert a new entry
-            self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id) VALUES (?)', (shopping_list_id,))
+            # If the shopping list is not in the updated_shopping_lists table, insert a new entry with the provided or current timestamp
+            if timestamp:
+                self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id, updated_at) VALUES (?, ?)', (shopping_list_id, timestamp,))
+            else:
+                self.cursor.execute('INSERT INTO updated_shopping_lists (shopping_list_id) VALUES (?)', (shopping_list_id,))
 
         self.conn.commit()
 
