@@ -222,6 +222,7 @@ class Server:
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
         self.socket.connect(f"tcp://127.0.0.1:{self.broker_port}")
+        self.curr_broker_nr += 1
 
     def send_request_receive_reply(self, message):
         for _ in range(3):
@@ -240,7 +241,6 @@ class Server:
                 else:
                     print(f"\n[ERROR] > [{self.name}]: No message received within {self.message_receive_timeout} seconds from [BROKER {self.broker_port}]")
                     self.socket.disconnect(f"tcp://127.0.0.1:{self.broker_port}")
-                    self.curr_broker_nr += 1
                     print(f"\n [{self.name}]: ASSUMING BROKER IS OFFLINE")
             except zmq.ZMQError as e:
                 print(f"\n[ERROR] > [{self.name}]: Error receiving message from BROKER: {e}")

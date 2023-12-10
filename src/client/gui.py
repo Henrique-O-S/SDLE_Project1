@@ -5,14 +5,22 @@ import tkinter as tk
 # --------------------------------------------------------------
 
 class ArmazonGUI:
-    def __init__(self, client):
+    def __init__(self, client, automatic_refresh=True, refresh_interval=10):
         self.client = client
+        self.automatic_refresh = automatic_refresh
+        self.refresh_interval = refresh_interval
+        self.curr_page = None
         self.root = tk.Tk()
         self.root.title("ARMAZON")
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.build()
+        self.refresh_schedule()
         self.root.mainloop()
-        self.curr_page = None
+
+    def refresh_schedule(self):
+        if self.automatic_refresh:
+            self.refresh()
+            self.root.after(self.refresh_interval * 1000, self.refresh_schedule)
 
     def clear(self):
         for widget in self.content_frame.winfo_children():
@@ -49,13 +57,14 @@ class ArmazonGUI:
 
     def refresh(self):
         self.client.refresh()
-        if self.curr_page == "home":
-            self.home()
-        elif self.curr_page == "shopping_lists":
+        if self.curr_page == "shopping_lists":
             self.shopping_lists()
         elif self.curr_page.startswith("shopping_list:"):
             list_id = self.curr_page.split(":")[1]
-            self.shopping_list(list_id)
+            if self.client.database.is_list_removed(list_id):
+                self.shopping_lists()
+            else:
+                self.shopping_list(list_id)
 
 # --------------------------------------------------------------
 

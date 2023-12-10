@@ -96,6 +96,10 @@ class ArmazonDB:
     def get_shopping_list(self, shopping_list_id):
         self.cursor.execute('SELECT * FROM shopping_lists WHERE id = ?', (shopping_list_id,))
         return self.cursor.fetchone()
+    
+    def is_list_removed(self, shopping_list_id):
+        self.cursor.execute('SELECT removed FROM shopping_lists WHERE id = ?', (shopping_list_id,))
+        return self.cursor.fetchone()[0]
 
     def get_shopping_lists(self):
         self.cursor.execute('SELECT * FROM shopping_lists WHERE removed = ?', (0,))
