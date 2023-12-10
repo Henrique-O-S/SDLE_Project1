@@ -7,7 +7,7 @@ import uuid
 
 
 class ConsistentHashRing:
-    def __init__(self, servers, virtual_nodes=1, plot=False, hashing_option=1, replication_factor=2):
+    def __init__(self, servers, virtual_nodes=1, plot=True, hashing_option=1, replication_factor=2):
         self.servers = servers
         self.virtual_nodes = virtual_nodes
         self.hashing_option = hashing_option
@@ -18,7 +18,7 @@ class ConsistentHashRing:
             self.replication_factor = len(servers) - 1
         self.ring = self._build_ring()
         if plot:
-            #self.plot_ring()
+            self.plot_ring()
             self.create_shopping_lists_and_plot(100000)
 
     def _build_ring(self):
@@ -35,11 +35,11 @@ class ConsistentHashRing:
 
     def _hash_key(self, key):
         if self.hashing_option == 0:
-            return int(hashlib.md5(key.encode()).hexdigest(), 16) % 10**32
+            return int(hashlib.md5(key.encode()).hexdigest(), 16)
         elif self.hashing_option == 1:
-            return int(hashlib.sha256(key.encode()).hexdigest(), 16) % 10**32
+            return int(hashlib.sha256(key.encode()).hexdigest(), 16)
         elif self.hashing_option == 2:
-            return int(hashlib.sha512(key.encode()).hexdigest(), 16) % 10**32
+            return int(hashlib.sha512(key.encode()).hexdigest(), 16)
 
     def get_nodes(self, key):
         if not self.ring:
@@ -84,7 +84,7 @@ class ConsistentHashRing:
 
 
         for i, (key, server) in enumerate(self.ring):
-            angle = (2 * np.pi * key) / (10 ** 32)
+            angle = (2 * np.pi * (key % 10**32)) / (10 ** 32)
             x = radius * np.cos(angle)
             y = radius * np.sin(angle)
 
@@ -120,7 +120,7 @@ class ConsistentHashRing:
             primary_server = nodes['primary']
 
             # Calculate the angle for the primary server
-            primary_angle = (2 * np.pi * self._hash_key(shopping_list_id)) / (10 ** 32)
+            primary_angle = (2 * np.pi * (self._hash_key(shopping_list_id) % 10**32)) / (10 ** 32)
 
             # Plot the shopping list for the primary server
             x_primary = 3 * np.cos(primary_angle)
