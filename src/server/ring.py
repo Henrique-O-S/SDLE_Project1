@@ -1,5 +1,6 @@
 import bisect
 import hashlib
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 import uuid
@@ -18,14 +19,13 @@ class ConsistentHashRing:
         self.ring = self._build_ring()
         if plot:
             self.plot_ring()
-        if test:
-            self.test_ring(100)
 
     def _build_ring(self):
         ring = []
         for server in self.servers:
             for i in range(self.virtual_nodes):
-                virtual_node = f"{server.name}-virtual-{i}"
+                salt = str(random.getrandbits(32))  # Random 128-bit salt
+                virtual_node = f"{server.name}_virtual_{i}_{salt}"
                 key = self._hash_key(virtual_node)
                 ring.append((key, server))
 
@@ -36,9 +36,9 @@ class ConsistentHashRing:
         if self.hashing_option == 0:
             return int(hashlib.md5(key.encode()).hexdigest(), 16)
         elif self.hashing_option == 1:
-            return int(hashlib.sha256(key.encode()).hexdigest(), 16)
+            return int(hashlib.sha256(key.encode()).hexdigest(), 16) % 10**32
         elif self.hashing_option == 2:
-            return int(hashlib.sha512(key.encode()).hexdigest(), 16)
+            return int(hashlib.sha512(key.encode()).hexdigest(), 16) % 10**32
 
     def get_nodes(self, key):
         if not self.ring:
@@ -71,20 +71,23 @@ class ConsistentHashRing:
         radius = 3  # Adjust the radius as needed
 
         fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
-        ax.set_xlim([-radius - 1, radius + 1])
-        ax.set_ylim([-radius - 1, radius + 1])
+        ax.set_xlim([-radius - 2, radius + 0.2])
+        ax.set_ylim([-radius - 0.2, radius + 0.2])
 
         circle = plt.Circle((0, 0), radius, edgecolor='black', facecolor='none')
         ax.add_artist(circle)
 
-        unique_nodes = list(set(server.name for _, server in self.ring))
+        unique_nodes = list(server.name for server in self.servers)
         colors = plt.cm.rainbow(np.linspace(0, 1, len(unique_nodes)))
 
         node_colors = {node: colors[i] for i, node in enumerate(unique_nodes)}
         legend_handles = []
 
-        for i, (_, server) in enumerate(self.ring):
-            angle = 2 * np.pi * i / num_nodes
+
+        for i, (key, server) in enumerate(self.ring):
+            angle = (2 * np.pi * key) / (10 ** 32)
+            #print server.name, angle in degrees
+            print(server.name, key, np.degrees(angle))
             x = radius * np.cos(angle)
             y = radius * np.sin(angle)
 
@@ -95,27 +98,43 @@ class ConsistentHashRing:
             if server.name not in [handle.get_label() for handle in legend_handles]:
                 legend_handles.append(ax.scatter([], [], marker='x', color=node_colors[server.name], label=server.name, s=100))
 
-        # Add information about the number of physical and virtual nodes to the legend
-        num_physical_nodes = len(set(server.name.split('-')[0] for _, server in self.ring))
-        num_virtual_nodes = len(self.ring) // num_physical_nodes
+        # Plot shopping lists
+        assigned_shopping_lists = self.add_shopping_lists(ax)
+        #append to legend number of shopping lists assinged to each server
+        for server, num_lists in assigned_shopping_lists.items():
+            legend_handles.append(plt.Line2D([0], [0], marker='o', color='grey', label=f"{server}: {num_lists}", markersize=10, markerfacecolor='none'))
 
-        # Create a second legend for the additional information
-        additional_legend = ax.legend(handles=[ax.scatter([], [], marker='x', color='none', label=f"Physical Nodes: {num_physical_nodes}\nVirtual Nodes: {num_virtual_nodes}")],
-                                    loc='upper right', bbox_to_anchor=(1, 1))
-
-        ax.add_artist(additional_legend)  # Add the second legend to the plot
+        # Create a single legend for nodes
+        legend_handles.append(plt.Line2D([0], [0], marker='x', color='w', label=f"Physical Nodes: {len(self.servers)}\nVirtual Nodes: {self.virtual_nodes}", markersize=10, markerfacecolor='none'))
+        ax.legend(handles=legend_handles, loc='upper left')
 
         ax.set_xticks([])
         ax.set_yticks([])
 
-        # Create a legend in the upper left corner with node labels and colors
-        ax.legend(handles=legend_handles, loc='upper left')
-
         plt.show()
 
 
+    def add_shopping_lists(self, ax, num_lists=20):
+        assigned_shopping_lists = {server.name: 0 for server in self.servers}
+        shopping_lists = [str(uuid.uuid4()) for _ in range(num_lists)]
 
+        for shopping_list_id in shopping_lists:
+            nodes = self.get_nodes(shopping_list_id)
+            primary_server = nodes['primary']
 
+            # Calculate the angle for the primary server
+            primary_angle = (2 * np.pi * self._hash_key(shopping_list_id)) / (10 ** 32)
+            print("shopping list", self._hash_key(shopping_list_id)  , np.degrees(primary_angle))
+
+            # Plot the shopping list for the primary server
+            x_primary = 3 * np.cos(primary_angle)
+            y_primary = 3 * np.sin(primary_angle)
+            ax.scatter(x_primary, y_primary, marker='o', color='grey', s=30)
+
+            assigned_shopping_lists[primary_server.name] += 1
+
+        print("Assigned shopping lists:", assigned_shopping_lists)
+        return assigned_shopping_lists
 
 
 
@@ -126,16 +145,3 @@ class ConsistentHashRing:
             virtual_node = f"{server.name}-virtual-{i}"
             key = self._hash_key(virtual_node)
             bisect.insort(self.ring, (key, server))
-
-    def test_ring(self, iterations):
-        print("Testing ring...")
-        assignments_count = {server.name: 0 for server in self.servers}
-        for i in range(iterations):
-            i+1
-            shopping_list_id = str(uuid.uuid4())
-            server = self.get_node(shopping_list_id)
-            assignments_count[server.name] += 1
-            # print(f"Shopping List {shopping_list_id} assigned to Server {server.name}")
-        print("Test complete")
-        for server_name, count in assignments_count.items():
-            print(f"Server {server_name} got {count} shopping lists.")
