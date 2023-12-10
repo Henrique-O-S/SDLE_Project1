@@ -7,7 +7,7 @@ import uuid
 
 
 class ConsistentHashRing:
-    def __init__(self, servers, virtual_nodes=1, plot=True, hashing_option=1, replication_factor=2):
+    def __init__(self, servers, virtual_nodes=1, plot=False, hashing_option=1, replication_factor=2):
         self.servers = servers
         self.virtual_nodes = virtual_nodes
         self.hashing_option = hashing_option
