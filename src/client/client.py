@@ -7,6 +7,7 @@ from broker.multi_broker import MultiBroker
 from db import ArmazonDB
 from crdts import ListsCRDT
 from client.gui import ArmazonGUI
+import ntp
 import random
 
 # --------------------------------------------------------------
@@ -105,17 +106,20 @@ class Client:
 # --------------------------------------------------------------
 
     def add_item(self, shopping_list_id, name, quantity):
-        item = self.database.add_item(name, quantity, shopping_list_id)
-        self.lists_crdt.add_item(shopping_list_id, (name, quantity))
+        timestamp = ntp.get_online_time()
+        item = self.database.add_item(name, quantity, shopping_list_id, timestamp)
+        self.lists_crdt.add_item(shopping_list_id, (name, quantity), timestamp)
         return item
 
     def update_item(self, shopping_list_id, name, quantity):
-        self.database.update_item(name, quantity, shopping_list_id)
-        self.lists_crdt.add_item(shopping_list_id, (name, quantity))
+        timestamp = ntp.get_online_time()
+        self.database.update_item(name, quantity, shopping_list_id, timestamp)
+        self.lists_crdt.add_item(shopping_list_id, (name, quantity), timestamp)
 
     def delete_item(self, shopping_list_id, name, quantity):
-        self.database.delete_item(name, shopping_list_id)
-        self.lists_crdt.remove_item(shopping_list_id, (name, quantity))
+        timestamp = ntp.get_online_time()
+        self.database.delete_item(name, shopping_list_id, timestamp)
+        self.lists_crdt.remove_item(shopping_list_id, (name, quantity), timestamp)
 
 # --------------------------------------------------------------
 
@@ -137,13 +141,13 @@ class Client:
             self.update_db_items(element[0])
         
     def update_db_items(self, shopping_list_id):
-        for item_name, (quantity, _) in self.lists_crdt.items_crdt.get(shopping_list_id).add_set.items():
+        for item_name, (quantity, timestamp) in self.lists_crdt.items_crdt.get(shopping_list_id).add_set.items():
             existing_item = self.database.get_item(shopping_list_id, item_name)
             if existing_item is None:
-                self.database.add_item(item_name, quantity, shopping_list_id)
+                self.database.add_item(item_name, quantity, shopping_list_id, timestamp)
             else:
-                self.database.update_item(item_name, quantity, shopping_list_id)
-        for item_name, _ in self.lists_crdt.items_crdt.get(shopping_list_id).remove_set.items():
-            self.database.delete_item(item_name, shopping_list_id)
+                self.database.update_item(item_name, quantity, shopping_list_id, timestamp)
+        for item_name, (_, timestamp) in self.lists_crdt.items_crdt.get(shopping_list_id).remove_set.items():
+            self.database.delete_item(item_name, shopping_list_id, timestamp)
 
 # --------------------------------------------------------------

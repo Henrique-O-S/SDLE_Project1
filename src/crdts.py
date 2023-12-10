@@ -1,6 +1,5 @@
 # --------------------------------------------------------------
 
-import ntp
 from collections import defaultdict
 from datetime import datetime
 
@@ -130,8 +129,9 @@ class ItemsCRDT:
 
     def handle_timestamp(self, timestamp):
         if timestamp is None:
-            return ntp.get_online_time()
+            return datetime.now()
         elif isinstance(timestamp, str):
+            print("boasss")
             return datetime.fromisoformat(timestamp)
         return timestamp
 
