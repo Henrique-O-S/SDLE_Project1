@@ -7,7 +7,7 @@ import uuid
 
 
 class ConsistentHashRing:
-    def __init__(self, servers, virtual_nodes=1, plot=False, test=False, hashing_option=2, replication_factor=2):
+    def __init__(self, servers, virtual_nodes=1, plot=False, hashing_option=1, replication_factor=2):
         self.servers = servers
         self.virtual_nodes = virtual_nodes
         self.hashing_option = hashing_option
@@ -19,12 +19,13 @@ class ConsistentHashRing:
         self.ring = self._build_ring()
         if plot:
             self.plot_ring()
+            #self.create_shopping_lists_and_plot(100000)
 
     def _build_ring(self):
         ring = []
         for server in self.servers:
             for i in range(self.virtual_nodes):
-                salt = str(random.getrandbits(32))  # Random 128-bit salt
+                salt = str(random.getrandbits(8))  # Random 128-bit salt
                 virtual_node = f"{server.name}_virtual_{i}_{salt}"
                 key = self._hash_key(virtual_node)
                 ring.append((key, server))
@@ -56,11 +57,9 @@ class ConsistentHashRing:
         for index in range(index+1, len(self.ring) * 3):
             index = index % len(self.ring)
             node = self.ring[index]
-            # print("now in ", node[1].address)
             if node[1].address not in found_addresses:
                 found_addresses.append(node[1].address)
                 backup.append(node[1])
-                # print("added ", node[1].address)
             if len(backup) == self.replication_factor:
                 break
 
@@ -86,8 +85,6 @@ class ConsistentHashRing:
 
         for i, (key, server) in enumerate(self.ring):
             angle = (2 * np.pi * key) / (10 ** 32)
-            #print server.name, angle in degrees
-            print(server.name, key, np.degrees(angle))
             x = radius * np.cos(angle)
             y = radius * np.sin(angle)
 
@@ -114,7 +111,7 @@ class ConsistentHashRing:
         plt.show()
 
 
-    def add_shopping_lists(self, ax, num_lists=20):
+    def add_shopping_lists(self, ax, num_lists=5):
         assigned_shopping_lists = {server.name: 0 for server in self.servers}
         shopping_lists = [str(uuid.uuid4()) for _ in range(num_lists)]
 
@@ -124,7 +121,6 @@ class ConsistentHashRing:
 
             # Calculate the angle for the primary server
             primary_angle = (2 * np.pi * self._hash_key(shopping_list_id)) / (10 ** 32)
-            print("shopping list", self._hash_key(shopping_list_id)  , np.degrees(primary_angle))
 
             # Plot the shopping list for the primary server
             x_primary = 3 * np.cos(primary_angle)
@@ -133,9 +129,28 @@ class ConsistentHashRing:
 
             assigned_shopping_lists[primary_server.name] += 1
 
-        print("Assigned shopping lists:", assigned_shopping_lists)
         return assigned_shopping_lists
 
+    def create_shopping_lists_and_plot(self, num_lists):
+        assigned_shopping_lists = {server.name: 0 for server in self.servers}
+        shopping_lists = [str(uuid.uuid4()) for _ in range(num_lists)]
+
+        for shopping_list_id in shopping_lists:
+            nodes = self.get_nodes(shopping_list_id)
+            primary_server = nodes['primary']
+            assigned_shopping_lists[primary_server.name] += 1
+
+        # Plotting
+        servers = list(assigned_shopping_lists.keys())
+        counts = list(assigned_shopping_lists.values())
+
+        fig, ax = plt.subplots()
+        ax.bar(servers, counts, color='blue')
+        ax.set_ylabel('Number of Shopping Lists')
+        ax.set_xlabel('Server Name')
+        ax.set_title(f'Distribution of {num_lists} Shopping Lists\n SHA-256 \n {self.virtual_nodes} virtual nodes')
+
+        plt.show()
 
 
 
